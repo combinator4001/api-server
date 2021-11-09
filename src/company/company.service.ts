@@ -1,6 +1,6 @@
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from 'src/app/prisma.service';
 import { Role } from '.prisma/client';
 import * as bcrypt from 'bcrypt';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
