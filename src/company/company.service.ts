@@ -1,11 +1,57 @@
-import { Injectable } from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
+import { PrismaService } from 'src/prisma.service';
+import { Role } from '.prisma/client';
+import * as bcrypt from 'bcrypt';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+
+
+
 
 @Injectable()
 export class CompanyService {
-  create(createCompanyDto: CreateCompanyDto) {
-    return 'This action adds a new company';
+  constructor(private prisma : PrismaService){}
+
+  async create(createCompanyDto: CreateCompanyDto) {
+    const {username, password, name, email} = createCompanyDto;
+    
+    //Check company exists or not
+    let resultUser = await this.prisma.user.findUnique({
+      where : {
+        username
+      }
+    });
+    if(resultUser){
+      //username exists
+      throw new HttpException('Username already exists.', HttpStatus.BAD_REQUEST);
+    }
+
+    //New username
+    const saltOrRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltOrRounds);
+
+    resultUser = await this.prisma.user.create({
+      data:{
+        username : username,
+        password : hashedPassword,
+        role : Role.COMPANY,
+
+				company : {
+					create: {
+						name : name,
+						email : email
+					}
+				}
+      }
+    });
+
+    if(resultUser){
+		  return;
+		}
+		else{
+		  throw new HttpException('Failed to register, try again later.', HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
   }
 
   findAll() {
