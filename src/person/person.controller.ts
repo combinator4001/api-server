@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common'
 import { PersonService } from './person.service';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
-import { ApiBadRequestResponse, ApiCreatedResponse, ApiInternalServerErrorResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiCreatedResponse, ApiInternalServerErrorResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
 @Controller('person')
 @ApiTags('Person')
@@ -10,11 +10,15 @@ export class PersonController {
   constructor(private readonly personService: PersonService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Register a user' })
   @ApiCreatedResponse({
     description : 'Person registered.'
   })
   @ApiBadRequestResponse({
-    description : 'Username already exists. / Invalid fields'
+    description : 'Invalid fields'
+  })
+  @ApiUnauthorizedResponse({
+    description : 'Username already exists.'
   })
   @ApiInternalServerErrorResponse({
     description : 'Failed to register, try again later.'

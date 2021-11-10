@@ -23,7 +23,7 @@ export class CompanyService {
     });
     if(resultUser){
       //username exists
-      throw new HttpException('Username already exists.', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Username already exists.', HttpStatus.UNAUTHORIZED);
     }
 
     //New username

@@ -47,6 +47,8 @@ export class CreateCompanyDto {
     @IsString()
     @IsEmail()
     email : string;
+
+    //name of owners
 }
 
 
