@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Put, Delete } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { PersonService } from './person.service';
 import { CreatePersonReqDto } from './dto/create-person-req.dto';
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiInternalServerErrorResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
@@ -28,23 +28,5 @@ export class PersonController {
   })
   async create(@Body() createPersonReqDto: CreatePersonReqDto) {
     return await this.personService.create(createPersonReqDto);
-  }
-
-  @Post('following/:username')
-  @ApiOperation({ summary: 'Person follows another user.' })
-  follow(){
-
-  }
-
-  @ApiOperation({ summary: 'Person unfollows another user.' })
-  @Delete('following/:username')
-  unFollow(){
-
-  }
-
-  @Delete('followers/:username')
-  @ApiOperation({ summary: 'Person removes another user from his/her followers.' })
-  removeFollower(){
-
   }
 }

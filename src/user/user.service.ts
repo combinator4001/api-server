@@ -1,5 +1,5 @@
 import { Role, User } from '.prisma/client';
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/app/prisma.service';
 import { AuthService } from 'src/auth/auth.service';
 import { LoginPersonResDto } from './dto/login-res.dto'
@@ -10,19 +10,6 @@ export class UserService {
     private prisma : PrismaService,
     private authService : AuthService
   ){}
-
-  // /**
-  //  * Returns the user who has the given username
-  //  * @param username 
-  //  * @returns 
-  //  */
-  // async findOne(username: string): Promise<User | null> {
-  //   return this.prisma.user.findUnique({
-  //     where : {
-  //       username : username
-  //     }
-  //   })
-  // }
 
   /**
    * Returns a token and user infos.
@@ -54,6 +41,62 @@ export class UserService {
       // return new LoginPersonResDto(user);
       return {
         message : 'company dto res required!'
+      }
+    }
+  }
+
+  /**
+   * Follows another user.
+   * @param id 
+   * @param followingUsername 
+   * @returns 201, 400, 401
+   */
+   async follow(id : number, followingUsername : string){
+    const user = await this.prisma.user.findUnique({
+      where : {
+        id : id
+      }
+    })
+
+    if(!user){
+      // 401
+      // malicious payload
+      throw new HttpException({
+        statusCode : HttpStatus.UNAUTHORIZED,
+        message : 'Unauthorized!'
+      }, HttpStatus.UNAUTHORIZED);  
+    }
+
+    const following = await this.prisma.user.findUnique({
+      where : {
+        username : followingUsername
+      }
+    })
+
+    if(!following){
+      // no one to follow
+      return {
+        statusCode : HttpStatus.BAD_REQUEST,
+        message : 'followingUsername not found!'
+      }
+    }
+
+    const result = await this.prisma.user.update({
+      where : {id : user.id},
+      data : {
+        following : {
+          connect : {
+            id : following.id
+          }
+        }
+      }
+    })
+
+    if(result){
+      //201
+      return {
+        statusCode : HttpStatus.CREATED,
+        message : 'Followed successfully!'
       }
     }
   }

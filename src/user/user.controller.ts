@@ -1,17 +1,19 @@
-import { Controller, Post, Get, Request, Body, UseGuards } from '@nestjs/common';
-import { ApiCreatedResponse, ApiExtraModels, ApiOperation, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
-import { AuthService } from 'src/auth/auth.service';
+import { Controller, Post, Get, Request, Body, UseGuards, Delete } from '@nestjs/common';
+import { ApiBadRequestResponse, ApiCreatedResponse, ApiExtraModels, ApiHeader, ApiInternalServerErrorResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { LocalAuthGuard } from 'src/auth/local-auth.guard';
 import { UserService } from './user.service';
 import { LoginReqDto } from './dto/login-req.dto';
 import { LoginPersonResDto, LoginCompanyResDto, FailedLoginDto } from './dto/login-res.dto';
+import { FollowReqDto } from './dto/follow-req.dto';
 @ApiTags('User')
 @Controller('')
 export class UserController {
   constructor(
     private userService: UserService
   ) {}
+
+  //Auth section
 
   @UseGuards(LocalAuthGuard)
   @Post('auth/login')
@@ -34,13 +36,41 @@ export class UserController {
     return await this.userService.login(req.user);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get(':username')
-  @ApiOperation({summary: 'Returns the given username profile.'})
-  getProfile(@Request() req) {
+
+  //Following section
+
+  @Get(':username/following')
+  @ApiOperation({summary: 'Returns the given username following.'})
+  getFollowing(@Request() req) {
     //console.log(req.user);
-    return 'you are authorized';
+    return 'these are the followings';
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':username/following')
+  @ApiHeader({name : 'Authorization'})
+  @ApiOperation({ summary: 'User follows another user.' })
+  @ApiCreatedResponse({ description : 'Followed successfully!'})
+  // BadRequest : 1.Already followed 2.followingUsername not found
+  @ApiBadRequestResponse({description : 'followingUsername not found.'})
+  // Unauthorized : 1.invalid jwt, 2.malicious payload(user not found)
+  @ApiUnauthorizedResponse({description : 'Unauthorized!'})
+  @ApiInternalServerErrorResponse({description : 'Server error'})
+  follow(@Request() req, @Body() followReqDto : FollowReqDto){
+    //req.user is the payload which we have received.
+    return this.userService.follow(req.user.id, followReqDto.followingUsername);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':username/following')
+  @ApiOperation({ summary: 'User unfollows another user.' })
+  @ApiHeader({name : 'Authorization'})
+  unFollow(){
+
+  }
+
+
+  //Followers section
 
   @Get(':username/followers')
   @ApiOperation({summary: 'Returns the given username followers.'})
@@ -49,9 +79,20 @@ export class UserController {
     return 'you are authorized';
   }
 
-  @Get(':username/following')
-  @ApiOperation({summary: 'Returns the given username following.'})
-  getFollowing(@Request() req) {
+  @UseGuards(JwtAuthGuard)
+  @Delete(':username/followers')
+  @ApiOperation({ summary: 'User removes another user from his/her followers.' })
+  @ApiHeader({name : 'Authorization'})
+  removeFollower(){
+
+  }
+
+
+  // Profile section
+
+  @Get(':username')
+  @ApiOperation({summary: 'Returns the given username profile.'})
+  getProfile(@Request() req) {
     //console.log(req.user);
     return 'you are authorized';
   }
