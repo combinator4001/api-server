@@ -29,8 +29,23 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('profile')
+  @Get(':username')
+  @ApiOperation({summary: 'Returns the given username profile.'})
   getProfile(@Request() req) {
+    //console.log(req.user);
+    return 'you are authorized';
+  }
+
+  @Get(':username/followers')
+  @ApiOperation({summary: 'Returns the given username followers.'})
+  getFollowers(@Request() req) {
+    //console.log(req.user);
+    return 'you are authorized';
+  }
+
+  @Get(':username/following')
+  @ApiOperation({summary: 'Returns the given username following.'})
+  getFollowing(@Request() req) {
     //console.log(req.user);
     return 'you are authorized';
   }

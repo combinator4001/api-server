@@ -1,17 +1,18 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsString, MaxLength, MinLength } from "class-validator";
+import { usernameMinLentgh, usernameMaxLentgh} from './../../variables';
 
 export class LoginReqDto {
     @ApiProperty({
-        minLength : 6,
-        maxLength : 20,
+        minLength : usernameMinLentgh,
+        maxLength : usernameMaxLentgh,
     })
     @IsString()
-    @MinLength(6, {
-        message : 'username must be at least 6 characters.',
+    @MinLength(usernameMinLentgh, {
+        message : `username must be at least ${usernameMinLentgh} characters.`,
       })
-    @MaxLength(20, {
-        message : 'username must be at most 20 characters.'
+    @MaxLength(usernameMaxLentgh, {
+        message : `username must be at most ${usernameMaxLentgh} characters.`
     })
     username : string;
 
