@@ -1,4 +1,4 @@
-import { Role, User } from '.prisma/client';
+import { PrismaClient, Role, User } from '.prisma/client';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/app/prisma.service';
 import { AuthService } from 'src/auth/auth.service';
@@ -96,8 +96,64 @@ export class UserService {
       //201
       return {
         statusCode : HttpStatus.CREATED,
-        message : 'Followed successfully!'
+        message : 'Followed!'
       }
+    }
+  }
+
+  /**
+   * Unfollows another user.
+   * @param id 
+   * @param unfollowUsername 
+   * @returns 
+   */
+  async unfollow(id : number, unfollowUsername : string){
+    const user = await this.prisma.user.findUnique({
+      where : {
+        id : id
+      }
+    })
+
+    if(!user){
+      // 401
+      // malicious payload
+      throw new HttpException({
+        statusCode : HttpStatus.UNAUTHORIZED,
+        message : 'Unauthorized!'
+      }, HttpStatus.UNAUTHORIZED);  
+    }
+
+    const unfollowUser = await this.prisma.user.findUnique({
+      where : {
+        username : unfollowUsername
+      }
+    });
+
+    if(!unfollowUser){
+      // no one to unfollow
+      return {
+        statusCode : HttpStatus.BAD_REQUEST,
+        message : 'unfollowUsername not found!'
+      };
+    }
+
+    const result = await this.prisma.user.update({
+      where : {id : user.id},
+      data : {
+        following : {
+          disconnect : {
+            id : unfollowUser.id
+          }
+        }
+      }
+    });
+
+    if(result){
+      //201
+      return {
+        statusCode : HttpStatus.CREATED,
+        message : 'Unfollowed!'
+      };
     }
   }
 }

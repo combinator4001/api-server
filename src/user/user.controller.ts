@@ -1,11 +1,13 @@
 import { Controller, Post, Get, Request, Body, UseGuards, Delete } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiCreatedResponse, ApiExtraModels, ApiHeader, ApiInternalServerErrorResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiCreatedResponse, ApiExtraModels, ApiHeader, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { LocalAuthGuard } from 'src/auth/local-auth.guard';
 import { UserService } from './user.service';
 import { LoginReqDto } from './dto/login-req.dto';
 import { LoginPersonResDto, LoginCompanyResDto, FailedLoginDto } from './dto/login-res.dto';
 import { FollowReqDto } from './dto/follow-req.dto';
+import { UnfollowReqDto } from './dto/unfollow-req.dto';
+
 @ApiTags('User')
 @Controller('')
 export class UserController {
@@ -65,8 +67,12 @@ export class UserController {
   @Delete(':username/following')
   @ApiOperation({ summary: 'User unfollows another user.' })
   @ApiHeader({name : 'Authorization'})
-  unFollow(){
-
+  @ApiOkResponse({ description : 'Unfollowed successfully!'})
+  @ApiBadRequestResponse({description : 'unfollowUsername not found.'})
+  @ApiUnauthorizedResponse({description : 'Unauthorized!'})
+  @ApiInternalServerErrorResponse({description : 'Server error'})
+  unFollow(@Request() req, @Body() unfollowReqDto : UnfollowReqDto){
+    return this.userService.unfollow(req.user.id, unfollowReqDto.unfollowUsername);
   }
 
 
