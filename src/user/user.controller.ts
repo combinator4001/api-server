@@ -25,7 +25,7 @@ export class UserController {
     description : 'Invalid credentials.'
   })
   async login(@Request() req, @Body() body : LoginReqDto ) {
-    return this.authService.signToken(req.user);
+    // return this.authService.signToken(req.user);
   }
 
   @UseGuards(JwtAuthGuard)

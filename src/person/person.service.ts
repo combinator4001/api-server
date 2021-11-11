@@ -1,12 +1,17 @@
 import { Role } from '.prisma/client';
-import { HttpCode, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from './../app/prisma.service';
 import { CreatePersonReqDto } from './dto/create-person-req.dto';
 import * as bcrypt from 'bcrypt';
+import { AuthService } from 'src/auth/auth.service';
+import {CreatePersonCreatedResDto} from './dto/create-person-res.dto';
 
 @Injectable()
 export class PersonService {
-  constructor(private prisma : PrismaService){}
+  constructor(
+    private prisma : PrismaService,
+    private authService: AuthService
+  ){}
 
   /**
    * creates a new person in database.
@@ -23,6 +28,7 @@ export class PersonService {
       }
     });
     if(resultUser){
+      //401
       //username exists
       throw new HttpException({
         statusCode : HttpStatus.UNAUTHORIZED,
@@ -50,9 +56,15 @@ export class PersonService {
     });
 
     if(resultUser){
-		  return 
+      //201
+      let {id, password, imageAddress , ...rest} = resultUser;
+      let user : any;
+      user = rest;
+      user.access_token = await this.authService.createToken(resultUser.id, resultUser.username, resultUser.role);
+      return new CreatePersonCreatedResDto(user);
 		}
 		else{
+      //500
 		  throw new HttpException(        {
         statusCode : HttpStatus.INTERNAL_SERVER_ERROR,
         message : 'Failed to register, try again later.'

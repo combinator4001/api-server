@@ -39,18 +39,16 @@ export class AuthService {
     }
 
     /**
-     * Signs a token to the user
+     * Creates a token for the given user
      * @param user 
      * @returns 
      */
-    async signToken(user: resultUser) {
-        const payload = { 
-            id: user.id,
-            username: user.username, 
-            role : user.role
+    async createToken(id : number, username : string, role : Role) {
+        const payload = {
+            id,
+            username, 
+            role
         };
-        return {
-          access_token: await this.jwtService.sign(payload),
-        };
+        return await this.jwtService.sign(payload);
     }
 }
