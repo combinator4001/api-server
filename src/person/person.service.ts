@@ -61,6 +61,8 @@ export class PersonService {
       let user : any;
       user = rest;
       user.access_token = await this.authService.createToken(resultUser.id, resultUser.username, resultUser.role);
+      user.firstName = firstName;
+      user.lastName = lastName;
       return new CreatePersonCreatedResDto(user);
 		}
 		else{
