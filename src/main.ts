@@ -9,7 +9,9 @@ async function bootstrap() {
 
   //use pipes to validate requests
   app.useGlobalPipes(
-    new ValidationPipe()
+    new ValidationPipe({
+      whitelist : true
+    })
   );
 
   //configuration for swagger
