@@ -23,20 +23,30 @@ export class CreatePersonCreatedResDto {
 
     @ApiProperty()
     // 6.
-    email: string;
-
-    @ApiProperty({example : false})
+    firstName : string;
+    
+    @ApiProperty()
     // 7.
-    showEmail : boolean;
+    lastName : string;
 
     @ApiProperty()
     // 8.
+    email: string;
+
+    @ApiProperty({example : false})
+    // 9.
+    showEmail : boolean;
+
+    @ApiProperty()
+    // 10.
     bio: string;
 
     constructor({
         access_token,
         username,
         role,
+        firstName,
+        lastName,
         email,
         showEmail,
         bio
@@ -46,6 +56,8 @@ export class CreatePersonCreatedResDto {
         this.access_token = access_token;
         this.username = username;
         this.role = role;
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.email = email;
         this.showEmail = showEmail;
         this.bio = bio;

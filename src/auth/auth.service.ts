@@ -4,12 +4,6 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/app/prisma.service';
 
-type resultUser = {
-    id : number,
-    username : string,
-    role : Role
-}
-
 @Injectable()
 export class AuthService {
     constructor(
@@ -18,12 +12,12 @@ export class AuthService {
     ) {}
 
     /**
-     * Find a user and removes password from object
+     * Finds an user object and removes password from that.
      * @param username 
      * @param pass 
      * @returns 
      */
-    async findUser(username: string, pass: string) : Promise<resultUser> {
+    async findUser(username: string, pass: string){
         const user = await this.prisma.user.findUnique({
             where : {
               username : username
@@ -39,7 +33,7 @@ export class AuthService {
     }
 
     /**
-     * Creates a token for the given user
+     * Creates a token for the given user.
      * @param user 
      * @returns 
      */
