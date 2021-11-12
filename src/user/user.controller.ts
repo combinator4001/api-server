@@ -1,5 +1,5 @@
-import { Controller, Post, Get, Request, Body, UseGuards, Delete } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiCreatedResponse, ApiExtraModels, ApiHeader, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
+import { Controller, Post, Get, Request, Body, UseGuards, Delete, UseInterceptors, UploadedFile, HttpStatus } from '@nestjs/common';
+import { ApiBadRequestResponse, ApiCreatedResponse, ApiExtraModels, ApiHeader, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { LocalAuthGuard } from 'src/auth/local-auth.guard';
 import { UserService } from './user.service';
@@ -7,6 +7,8 @@ import { LoginReqDto } from './dto/login-req.dto';
 import { LoginPersonResDto, LoginCompanyResDto, FailedLoginDto } from './dto/login-res.dto';
 import { FollowReqDto } from './dto/follow-req.dto';
 import { UnfollowReqDto } from './dto/unfollow-req.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { saveImageToStorage } from './helpers/profile-image.storage';
 
 @ApiTags('User')
 @Controller('')
@@ -101,5 +103,29 @@ export class UserController {
   getProfile(@Request() req) {
     //console.log(req.user);
     return 'you are authorized';
+  }
+
+  @Post('upload')
+  @UseInterceptors(
+    FileInterceptor('image', saveImageToStorage)
+  )
+  @ApiBadRequestResponse({description : 'File must be a png, jpg/jpeg'})
+  @ApiPayloadTooLargeResponse({description : 'File too large'})
+  uploadFile(@UploadedFile() file: Express.Multer.File) {
+    const fileName = file?.filename;
+    
+    if(!fileName){
+      return {
+        statusCode : HttpStatus.BAD_REQUEST,
+        message : 'File must be a png, jpg/jpeg'
+      };
+    }
+    else{
+      return {
+        statusCode : HttpStatus.CREATED,
+        message : 'Profile image updated!'
+      };
+    }
+
   }
 }

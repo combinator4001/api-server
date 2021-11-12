@@ -29,7 +29,7 @@ model User {
   email String
 
   showEmail     Boolean @default(false)
-  imageAddress  String  @default("")
+  imagePath     String  @default("")
   bio           String  @default("")
   blogs         Blog[]
   followedBy    User[]  @relation("UserFollows", references: [id])
