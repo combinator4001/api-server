@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Request, Body, UseGuards, Delete, UseInterceptors, UploadedFile, HttpStatus, Put, HttpCode, HttpException } from '@nestjs/common';
+import { Controller, Post, Get, Request, Body, UseGuards, Delete, UseInterceptors, UploadedFile, HttpStatus, Put, HttpCode, HttpException, Param } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiCreatedResponse, ApiExtraModels, ApiHeader, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { LocalAuthGuard } from 'src/auth/local-auth.guard';
@@ -11,12 +11,15 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { isFileExtensionSafe, removeFile, saveImageToStorage } from './helpers/profile-image.storage';
 import { join } from 'path';
 import { ImageUploadDto } from './dto/image-upload.dto'
+import { FollowService } from './follow.service';
+import { GetFollowingResDto} from './dto/follow-dtos/get-following-res.dto';
 
 @ApiTags('User')
 @Controller('')
 export class UserController {
   constructor(
-    private userService: UserService
+    private userService: UserService,
+    private followService : FollowService
   ) {}
 
   //Auth section
@@ -47,9 +50,25 @@ export class UserController {
 
   @Get(':username/following')
   @ApiOperation({summary: 'Returns the given username following.'})
-  getFollowing(@Request() req) {
+  @ApiOkResponse({
+    description : 'Returns array of usernames which are strings.',
+    type : GetFollowingResDto
+  })
+  @ApiBadRequestResponse({description : 'Requested username doesn’t exist!'})
+  @ApiInternalServerErrorResponse({description : 'Server error'})
+  async getFollowing(@Param('username') username : string) {
     //console.log(req.user);
-    return 'these are the followings';
+    const result = await this.followService.getFollowing(username);
+
+    if(result === null){
+      //400
+      throw new HttpException({
+        statusCode : HttpStatus.BAD_REQUEST,
+        message : "Requested username doesn’t exist!"
+      }, HttpStatus.BAD_REQUEST)
+    }
+
+    return new GetFollowingResDto(result as string[])
   }
 
   @UseGuards(JwtAuthGuard)
