@@ -1,14 +1,16 @@
-import { diskStorage } from "multer";
+import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
-import FileType from 'file-type';
-import * as path from "path";
+
+const fs = require('fs');
+const FileType = require('file-type');
+
+import path = require('path');
 
 type validFileExtension = 'png' | 'jpg' | 'jpeg';
 type validMimeType = 'image/png' | 'image/jpg' | 'image/jpeg';
 
-const validFileExtensions : validFileExtension[] = ['png' , 'jpg' , 'jpeg'];
-const validMimeTypes : validMimeType[] = ['image/png' , 'image/jpg' , 'image/jpeg'];
+const validFileExtensions: validFileExtension[] = ['png', 'jpg', 'jpeg'];
+const validMimeTypes: validMimeType[] = ['image/png', 'image/jpg', 'image/jpeg'];
 
 export const saveImageToStorage = {
     storage : diskStorage({
@@ -27,4 +29,21 @@ export const saveImageToStorage = {
         const allowedMimeTypes : validMimeType[] = validMimeTypes;
         allowedMimeTypes.includes(file.mimetype) ? cb(null, true) : cb(null, false);
     }
-}
+};
+
+export const isFileExtensionSafe = async (fullFilePath: string) : Promise<boolean> => {
+	const result = await FileType.fromFile(fullFilePath);
+    if(!result) return false;
+	const isFileTypeLegit = validFileExtensions.includes(result.ext);
+	const isMimeTypeLegit = validMimeTypes.includes(result.mime);
+	const isFileLegit = isFileTypeLegit && isMimeTypeLegit;
+	return isFileLegit;
+};
+
+export const removeFile = (fullFilePath: string): void => {
+	try {
+		fs.unlinkSync(fullFilePath);
+	} catch (err) {
+		console.error(err);
+	}
+};
