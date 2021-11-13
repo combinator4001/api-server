@@ -112,6 +112,7 @@ export class UserController {
   @UseInterceptors(
     FileInterceptor('image', saveImageToStorage)
   )
+  @ApiOperation({description : 'updates profile image.'})
   @ApiHeader({name : 'Authorization'})
   @ApiBadRequestResponse({description : 'File must be a png, jpg/jpeg. |  Invalid file.'})
   @ApiPayloadTooLargeResponse({description : 'File too large. File should be less than 300KiB.'})
@@ -136,7 +137,7 @@ export class UserController {
       if(await isFileExtensionSafe(fullImagePath)){
 
         //201
-        // this.userService.updateUserImagePathById(req.user.id, fileName);
+        this.userService.updateUserImagePathById(req.user.id, fileName);
 
         return {
           statusCode : HttpStatus.CREATED,
