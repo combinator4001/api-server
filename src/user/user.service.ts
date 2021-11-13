@@ -156,4 +156,15 @@ export class UserService {
       };
     }
   }
+
+  async updateUserImagePathById(userId, imageName){
+    await this.prisma.user.update({
+      where : {
+        id : userId
+      },
+      data : {
+        imageName : imageName
+      }
+    })
+  }
 }
