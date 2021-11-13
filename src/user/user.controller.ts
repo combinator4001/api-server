@@ -1,5 +1,5 @@
 import { Controller, Post, Get, Request, Body, UseGuards, Delete, UseInterceptors, UploadedFile, HttpStatus, Put, HttpCode, HttpException } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiCreatedResponse, ApiExtraModels, ApiHeader, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiCreatedResponse, ApiExtraModels, ApiHeader, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { LocalAuthGuard } from 'src/auth/local-auth.guard';
 import { UserService } from './user.service';
@@ -10,6 +10,7 @@ import { UnfollowReqDto } from './dto/unfollow-req.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { isFileExtensionSafe, removeFile, saveImageToStorage } from './helpers/profile-image.storage';
 import { join } from 'path';
+import { ImageUploadDto } from './dto/image-upload.dto'
 
 @ApiTags('User')
 @Controller('')
@@ -112,8 +113,14 @@ export class UserController {
   @UseInterceptors(
     FileInterceptor('image', saveImageToStorage)
   )
-  @ApiOperation({description : 'updates profile image.'})
+  @ApiOperation({description : 'Updates profile image.'})
   @ApiHeader({name : 'Authorization'})
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Attach the image file',
+    type: ImageUploadDto
+  })
+  @ApiCreatedResponse({description : 'Profile image updated!'})
   @ApiBadRequestResponse({description : 'File must be a png, jpg/jpeg. |  Invalid file.'})
   @ApiPayloadTooLargeResponse({description : 'File too large. File should be less than 300KiB.'})
   async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() req){
