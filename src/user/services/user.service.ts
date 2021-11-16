@@ -1,5 +1,6 @@
 import { PrismaClient, Role, User } from '.prisma/client';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { use } from 'passport';
 import { PrismaService } from 'src/app/prisma.service';
 import { AuthService } from 'src/auth/auth.service';
 import { LoginPersonResDto } from './../dtos/login-res.dto'
@@ -55,4 +56,10 @@ export class UserService {
       }
     })
   }
+
+  async resetPasswordToken(user : any){
+    user.hashedPassLastTenChars = user.password.slice(user.password.length - 10 , user.password.length - 1);
+    const forgetPassToken =  await this.authService.createForgetPassToken(user.id , user.username , user.role , user.hashedPassLastTenChars);
+  }
+
 }

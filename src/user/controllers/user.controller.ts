@@ -40,6 +40,9 @@ export class UserController {
     return await this.userService.login(req.user);
   }
 
+  async resetPassword(@Request() req, @Body() body: any ) {
+    return await this.userService.resetPasswordToken
+  }
 
   // Profile section
 
