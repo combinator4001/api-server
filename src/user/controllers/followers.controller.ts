@@ -1,6 +1,6 @@
 import { Controller, Delete, Get, HttpException, HttpStatus, Param, Request, UseGuards } from "@nestjs/common";
 import { ApiHeader, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
+import { JwtAuthGuard } from "src/auth/general/jwt-auth.guard";
 import { GetFollowersResDto } from "../dtos/follow-dtos/get-followers-res.dto";
 import { FollowersService } from "../services/followers.service";
 
