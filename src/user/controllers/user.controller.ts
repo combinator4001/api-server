@@ -12,6 +12,8 @@ import { ImageUploadDto } from './../dtos/image-upload.dto';
 import { ForgetPassJwtAuthGuard } from 'src/auth/forget-pass/forget-pass-jwt-auth.guard';
 import { SendResetPassLinkDto } from '../dtos/auth-dtos/send-reset-pass-link.dto';
 import { AuthService } from 'src/auth/auth.service';
+import * as bcrypt from 'bcrypt';
+import { ChangePassDto } from '../dtos/auth-dtos/change-pass.dto';
 
 @ApiTags('User')
 @Controller('')
@@ -75,11 +77,12 @@ export class UserController {
 
     @UseGuards(ForgetPassJwtAuthGuard)
     @Put('auth/password')
+    @HttpCode(200)
     @ApiOperation({summary : 'resets the given user password.'})
     @ApiHeader({name : 'Authorization'})
     @ApiOkResponse({description : 'Password changed successfully!'})
     @ApiUnauthorizedResponse({description : 'Unauthorized!'})
-    async resetPassword(@Request() req, @Body() body: any ) {
+    async resetPassword(@Request() req, @Body() body: ChangePassDto ) {
         // req.user = {
         //     id: number, 
         //     username: string,
@@ -87,7 +90,11 @@ export class UserController {
         //     hashedPassLastTenChars : string
         // }
         
-        
+        await this.userService.changePassword(req.user.id, body.newPassword);
+        return {
+            statusCode : HttpStatus.OK,
+            message : 'Password updated!'
+        }
     }
 
 
@@ -102,7 +109,7 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @Put('profile-image')
-  @HttpCode(201)
+  @HttpCode(200)
   @UseInterceptors(
     FileInterceptor('image', saveImageToStorage)
   )
@@ -136,11 +143,11 @@ export class UserController {
 
       if(await isFileExtensionSafe(fullImagePath)){
 
-        //201
+        //200
         this.userService.updateUserImagePathById(req.user.id, fileName);
 
         return {
-          statusCode : HttpStatus.CREATED,
+          statusCode : HttpStatus.OK,
           message : 'Profile image updated!'
         };
 

@@ -65,4 +65,17 @@ export class AuthService {
         }
         return await this.jwtService.sign(payload, {expiresIn : '10m'})
     }
+
+    async forgetTokenIsUsed(id : number, hashedPassLastTenChars : string) : Promise<boolean>{
+        const user = await this.prisma.user.findUnique({
+            where : {
+                id : id
+            }
+        });
+        if(user.password.slice(user.password.length - 10 , user.password.length - 1) !== hashedPassLastTenChars){
+            //token is used
+            return true;
+        }
+        return false;
+    }
 }

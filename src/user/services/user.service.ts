@@ -1,11 +1,11 @@
 import { PrismaClient, Role, User } from '.prisma/client';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { use } from 'passport';
 import { EmailService } from 'src/app/email.service';
 import { PrismaService } from 'src/app/prisma.service';
 import { AuthService } from 'src/auth/auth.service';
 import { frontServerUrl } from 'src/variables';
 import { LoginPersonResDto } from './../dtos/login-res.dto'
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -94,7 +94,21 @@ export class UserService {
     await this.emailService.sendOneMail(email, 'Password reset', body);
   }
 
-  async changePassword(){
-
+  /**
+   * Changes the given id password.
+   * @param id 
+   * @param newPassword 
+   */
+  async changePassword(id : number, newPassword : string){
+    const saltOrRounds = 10;
+    const newHashedPass = await bcrypt.hash(newPassword, saltOrRounds);
+    await this.prisma.user.update({
+      where : {
+        id : id
+      },
+      data : {
+        password : newHashedPass
+      }
+    })
   }
 }
