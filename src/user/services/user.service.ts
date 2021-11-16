@@ -77,18 +77,24 @@ export class UserService {
     return user;
   }
 
+  /**
+   * Sends change pass link to the given email.
+   * @param forgetPassToken 
+   * @param email 
+   */
   async sendForgetPassEmail(forgetPassToken : string, email : string) : Promise<void>{
     const body : string = `
-      Trouble signing in?
-
-      Resetting your password is easy. 
-
-      Just press the link below and follow the instructions.
-
+      <h1>Trouble signing in?</h1>
+      <br>
+      <p>Resetting your password is easy. Just press the link below and follow the instructions.</p>
       ${frontServerUrl + '/reset/' + forgetPassToken}
-
+      <br>
       If you did not make this request then please ignore this email.
     `;
     await this.emailService.sendOneMail(email, 'Password reset', body);
+  }
+
+  async changePassword(){
+
   }
 }

@@ -10,7 +10,7 @@ import { isFileExtensionSafe, removeFile, saveImageToStorage } from './../helper
 import { join } from 'path';
 import { ImageUploadDto } from './../dtos/image-upload.dto';
 import { ForgetPassJwtAuthGuard } from 'src/auth/forget-pass/forget-pass-jwt-auth.guard';
-import { ChangePassReqDto } from '../dtos/auth-dtos/change-pass-req.dto';
+import { SendResetPassLinkDto } from '../dtos/auth-dtos/send-reset-pass-link.dto';
 import { AuthService } from 'src/auth/auth.service';
 
 @ApiTags('User')
@@ -48,7 +48,7 @@ export class UserController {
     @ApiOperation({summary : 'sends reset password link.'})
     @ApiCreatedResponse({description : 'Email has been sent!'})
     @ApiBadRequestResponse({description : 'Username not found!'})
-    async sendResetPassEmail(@Body() body: ChangePassReqDto) {
+    async sendResetPassEmail(@Body() body: SendResetPassLinkDto) {
         const user = await this.userService.findOneUser(body.username);
         if(!user){
             //400
@@ -77,6 +77,8 @@ export class UserController {
     @Put('auth/password')
     @ApiOperation({summary : 'resets the given user password.'})
     @ApiHeader({name : 'Authorization'})
+    @ApiOkResponse({description : 'Password changed successfully!'})
+    @ApiUnauthorizedResponse({description : 'Unauthorized!'})
     async resetPassword(@Request() req, @Body() body: any ) {
         // req.user = {
         //     id: number, 

@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsString } from "class-validator";
 
-export class ChangePassReqDto{
+export class SendResetPassLinkDto{
     @ApiProperty()
     @IsString()
     username : string;
