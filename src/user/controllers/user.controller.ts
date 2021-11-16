@@ -9,40 +9,85 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { isFileExtensionSafe, removeFile, saveImageToStorage } from './../helpers/profile-image.storage';
 import { join } from 'path';
 import { ImageUploadDto } from './../dtos/image-upload.dto';
+import { ForgetPassJwtAuthGuard } from 'src/auth/forget-pass/forget-pass-jwt-auth.guard';
+import { ChangePassReqDto } from '../dtos/auth-dtos/change-pass-req.dto';
+import { AuthService } from 'src/auth/auth.service';
 
 @ApiTags('User')
 @Controller('')
 export class UserController {
-  constructor(
-    private userService: UserService
-  ) {}
+    constructor(
+        private userService: UserService,
+        private authService : AuthService
+    ) {}
 
-  //Auth section
+    //Auth section
 
-  @UseGuards(LocalAuthGuard)
-  @Post('auth/login')
-  @ApiOperation({ summary: 'Issues a token to a valid user.' })
-  @ApiExtraModels(LoginPersonResDto, LoginCompanyResDto)
-  @ApiCreatedResponse({
-    description : 'JSON web token created.',
-    schema : {
-      oneOf : [
-        { $ref : getSchemaPath(LoginPersonResDto)},
-        { $ref : getSchemaPath(LoginCompanyResDto)}
-      ]
+    @UseGuards(LocalAuthGuard)
+    @Post('auth/login')
+    @ApiOperation({ summary: 'Issues a token to a valid user.' })
+    @ApiExtraModels(LoginPersonResDto, LoginCompanyResDto)
+    @ApiCreatedResponse({
+        description : 'JSON web token created.',
+        schema : {
+            oneOf : [
+                { $ref : getSchemaPath(LoginPersonResDto)},
+                { $ref : getSchemaPath(LoginCompanyResDto)}
+            ]
+        }
+    })
+    @ApiUnauthorizedResponse({
+        description : 'Unauthorized.',
+        type : FailedLoginDto
+    })
+    async login(@Request() req, @Body() body : LoginReqDto ) {
+        return await this.userService.login(req.user);
     }
-  })
-  @ApiUnauthorizedResponse({
-    description : 'Unauthorized.',
-    type : FailedLoginDto
-  })
-  async login(@Request() req, @Body() body : LoginReqDto ) {
-    return await this.userService.login(req.user);
-  }
 
-  async resetPassword(@Request() req, @Body() body: any ) {
-    return await this.userService.resetPasswordToken
-  }
+    @Post('auth/password')
+    @ApiOperation({summary : 'sends reset password link.'})
+    @ApiCreatedResponse({description : 'Email has been sent!'})
+    @ApiBadRequestResponse({description : 'Username not found!'})
+    async sendResetPassEmail(@Body() body: ChangePassReqDto) {
+        const user = await this.userService.findOneUser(body.username);
+        if(!user){
+            //400
+            throw new HttpException({
+                statusCode : HttpStatus.BAD_REQUEST,
+                massage : 'Username not found!'
+            }, HttpStatus.BAD_REQUEST)
+        }
+
+        const forgetPassToken = await this.authService.createForgetPassToken(
+            user.id,
+            user.username,
+            user.role,
+            user.password.slice(user.password.length - 10 , user.password.length - 1)
+        );
+
+        await this.userService.sendForgetPassEmail(forgetPassToken, user.email);
+
+        return {
+            statusCode : HttpStatus.CREATED,
+            message : 'Email has been sent!'
+        };
+    }
+
+    @UseGuards(ForgetPassJwtAuthGuard)
+    @Put('auth/password')
+    @ApiOperation({summary : 'resets the given user password.'})
+    @ApiHeader({name : 'Authorization'})
+    async resetPassword(@Request() req, @Body() body: any ) {
+        // req.user = {
+        //     id: number, 
+        //     username: string,
+        //     role : Role,
+        //     hashedPassLastTenChars : string
+        // }
+        
+        
+    }
+
 
   // Profile section
 

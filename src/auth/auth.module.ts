@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { LocalStrategy } from './general/local.strategy';
 import { jwtConstants } from './constants';
 import { JwtStrategy } from './general/jwt.strategy';
+import { ForgetPassJwtStrategy } from './forget-pass/forget-pass-jwt.strategy';
 
 @Module({
   imports: [ 
@@ -15,7 +16,8 @@ import { JwtStrategy } from './general/jwt.strategy';
   providers: [
     AuthService, 
     LocalStrategy, 
-    JwtStrategy
+    JwtStrategy,
+    ForgetPassJwtStrategy
   ],
   exports: [AuthService]
 })

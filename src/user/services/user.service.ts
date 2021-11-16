@@ -1,15 +1,18 @@
 import { PrismaClient, Role, User } from '.prisma/client';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { use } from 'passport';
+import { EmailService } from 'src/app/email.service';
 import { PrismaService } from 'src/app/prisma.service';
 import { AuthService } from 'src/auth/auth.service';
+import { frontServerUrl } from 'src/variables';
 import { LoginPersonResDto } from './../dtos/login-res.dto'
 
 @Injectable()
 export class UserService {
   constructor(
     private prisma : PrismaService,
-    private authService : AuthService
+    private authService : AuthService,
+    private emailService : EmailService
   ){}
 
   /**
@@ -57,9 +60,35 @@ export class UserService {
     })
   }
 
-  async resetPasswordToken(user : any){
-    user.hashedPassLastTenChars = user.password.slice(user.password.length - 10 , user.password.length - 1);
-    const forgetPassToken =  await this.authService.createForgetPassToken(user.id , user.username , user.role , user.hashedPassLastTenChars);
+  /**
+   * finds an unique user by the given username.
+   * @param username 
+   * @returns User or null
+   */
+  async findOneUser(username : string) : Promise< User | null > {
+    const user = await this.prisma.user.findUnique({
+      where : {
+        username : username
+      }
+    })
+
+    if(!user) return null;
+
+    return user;
   }
 
+  async sendForgetPassEmail(forgetPassToken : string, email : string) : Promise<void>{
+    const body : string = `
+      Trouble signing in?
+
+      Resetting your password is easy. 
+
+      Just press the link below and follow the instructions.
+
+      ${frontServerUrl + '/reset/' + forgetPassToken}
+
+      If you did not make this request then please ignore this email.
+    `;
+    await this.emailService.sendOneMail(email, 'Password reset', body);
+  }
 }

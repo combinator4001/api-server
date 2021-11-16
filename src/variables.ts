@@ -9,3 +9,7 @@ export const passwordMaxLength = 100;
 //firstName, lastName, name
 export const nameMinLength = 1;
 export const nameMaxLength = 50;
+
+//jwt expirations
+
+export const frontServerUrl : string = 'http://localhost:3000';
