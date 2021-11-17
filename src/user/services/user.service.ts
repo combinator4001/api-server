@@ -1,14 +1,18 @@
 import { PrismaClient, Role, User } from '.prisma/client';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { EmailService } from 'src/app/email.service';
 import { PrismaService } from 'src/app/prisma.service';
 import { AuthService } from 'src/auth/auth.service';
+import { frontServerUrl } from 'src/variables';
 import { LoginPersonResDto } from './../dtos/login-res.dto'
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
   constructor(
     private prisma : PrismaService,
-    private authService : AuthService
+    private authService : AuthService,
+    private emailService : EmailService
   ){}
 
   /**
@@ -52,6 +56,58 @@ export class UserService {
       },
       data : {
         imageName : imageName
+      }
+    })
+  }
+
+  /**
+   * finds an unique user by the given username.
+   * @param username 
+   * @returns User or null
+   */
+  async findOneUser(username : string) : Promise< User | null > {
+    const user = await this.prisma.user.findUnique({
+      where : {
+        username : username
+      }
+    })
+
+    if(!user) return null;
+
+    return user;
+  }
+
+  /**
+   * Sends change pass link to the given email.
+   * @param forgetPassToken 
+   * @param email 
+   */
+  async sendForgetPassEmail(forgetPassToken : string, email : string) : Promise<void>{
+    const body : string = `
+      <h1>Trouble signing in?</h1>
+      <br>
+      <p>Resetting your password is easy. Just press the link below and follow the instructions.</p>
+      ${frontServerUrl + '/reset/' + forgetPassToken}
+      <br>
+      If you did not make this request then please ignore this email.
+    `;
+    await this.emailService.sendOneMail(email, 'Password reset', body);
+  }
+
+  /**
+   * Changes the given id password.
+   * @param id 
+   * @param newPassword 
+   */
+  async changePassword(id : number, newPassword : string){
+    const saltOrRounds = 10;
+    const newHashedPass = await bcrypt.hash(newPassword, saltOrRounds);
+    await this.prisma.user.update({
+      where : {
+        id : id
+      },
+      data : {
+        password : newHashedPass
       }
     })
   }

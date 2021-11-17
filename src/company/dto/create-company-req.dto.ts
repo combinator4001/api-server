@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsString, MaxLength, MinLength } from "class-validator";
+import { IsArray, IsEmail, IsString, MaxLength, MinLength } from "class-validator";
 import * as vars from './../../variables';
 
 export class CreateCompanyReqDto {
@@ -55,9 +55,15 @@ export class CreateCompanyReqDto {
 
     // 5.owners
     @ApiProperty({
-        description: 'The list of Owners is here'
+        description: 'List of owners'
     })
-    @IsString()
-    owners : string [ ];
+    @MinLength(vars.nameMinLength, {
+        each : true
+    })
+    @MaxLength(vars.nameMaxLength, {
+        each: true
+    })
+    @IsArray()
+    owners : string[];
     
 }

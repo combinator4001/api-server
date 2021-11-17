@@ -9,7 +9,15 @@ import { FollowersService } from './services/followers.service';
 
 @Module({
   imports : [AuthModule],
-  controllers: [UserController, FollowingController, FollowersController],
-  providers: [UserService, FollowingService, FollowersService]
+  controllers: [
+    UserController,
+    FollowingController, 
+    FollowersController
+  ],
+  providers: [
+    UserService,
+    FollowingService,
+    FollowersService
+  ]
 })
 export class UserModule {}

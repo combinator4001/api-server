@@ -1,6 +1,6 @@
 import { Body, Request, Controller, Get, HttpException, HttpStatus, Param, Post, UseGuards, Delete } from "@nestjs/common";
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiHeader, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
-import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
+import { JwtAuthGuard } from "src/auth/general/jwt-auth.guard";
 import { UnfollowReqDto } from "../dtos/follow-dtos/unfollow-req.dto";
 import { FollowReqDto } from "../dtos/follow-dtos/follow-req.dto";
 import { GetFollowingResDto } from "./../dtos/follow-dtos/get-following-res.dto";
