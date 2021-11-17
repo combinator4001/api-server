@@ -1,10 +1,10 @@
-import { PrismaClient, Role, User } from '.prisma/client';
+import { Company, Person, PrismaClient, Role, User } from '.prisma/client';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { EmailService } from 'src/app/email.service';
 import { PrismaService } from 'src/app/prisma.service';
 import { AuthService } from 'src/auth/auth.service';
 import { frontServerUrl } from 'src/variables';
-import { LoginPersonResDto } from './../dtos/login-res.dto'
+import { LoginCompanyResDto, LoginPersonResDto } from './../dtos/login-res.dto'
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -20,10 +20,10 @@ export class UserService {
    * @param user 
    * @returns 
    */
-  async login(user : any){
+   async login(user : any){
     const token = await this.authService.createToken(user.id, user.username, user.role);
     if(user.role === Role.PERSON){
-      const result = await this.prisma.person.findUnique({
+      const result : Person = await this.prisma.person.findUnique({
         where : {
           user_id : user.id
         }
@@ -34,18 +34,15 @@ export class UserService {
       return new LoginPersonResDto(user);
     }
     else if(user.role === Role.COMPANY){
-      // const result = await this.prisma.company.findUnique({
-      //   where : {
-      //     user_id : user.id
-      //   }
-      // })
-      // user.access_token = token;
-      // user.name = result.name;
-      // user.owners = result.owners;
-      // return new LoginPersonResDto(user);
-      return {
-        message : 'company dto res required!'
-      }
+      const result : Company = await this.prisma.company.findUnique({
+        where : {
+          user_id : user.id
+        }
+      })
+      user.access_token = token;
+      user.name = result.name;
+      user.owners = result.owners;
+      return new LoginCompanyResDto(user);
     }
   }
 
