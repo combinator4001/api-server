@@ -32,7 +32,7 @@ model User {
   imageName     String  @default("")
   bio           String  @default("")
   blogs         Blog[]
-  followedBy    User[]  @relation("UserFollows", references: [id])
+  followedBy    User[]  @relation("UserFollows", references: [id], onDelete: Cascade)
   following     User[]  @relation("UserFollows", references: [id])
   followingTags Tag[]
 }
@@ -42,7 +42,7 @@ model Admin {
   firstName String
   lastName  String
 
-  user User @relation(fields: [user_id], references: [id])
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Person {
@@ -50,7 +50,7 @@ model Person {
   firstName String
   lastName  String
 
-  user User @relation(fields: [user_id], references: [id])
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Company {
@@ -59,7 +59,7 @@ model Company {
   owners  String[]
   tags    Tag[]
 
-  user User @relation(fields: [user_id], references: [id])
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Blog {
@@ -69,7 +69,7 @@ model Blog {
   content   String
   tags      Tag[]
 
-  author User @relation(fields: [author_id], references: [id])
+  author User @relation(fields: [author_id], references: [id], onDelete: Cascade)
 }
 
 model Tag {
