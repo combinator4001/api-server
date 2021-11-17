@@ -62,7 +62,7 @@ export class UserService {
    * @param username 
    * @returns User or null
    */
-  async findOneUser(username : string) : Promise< User | null > {
+  async findUserByUsername(username : string) : Promise< User | null > {
     const user = await this.prisma.user.findUnique({
       where : {
         username : username
@@ -73,6 +73,24 @@ export class UserService {
 
     return user;
   }
+
+    /**
+   * finds an unique user by the given username.
+   * @param username 
+   * @returns User or null
+   */
+	async findUserById(id : number) : Promise< User | null > {
+      const user = await this.prisma.user.findUnique({
+        where : {
+          id : id
+        }
+      })
+  
+      if(!user) return null;
+  
+      return user;
+    }
+  
 
   /**
    * Sends change pass link to the given email.
@@ -107,5 +125,29 @@ export class UserService {
         password : newHashedPass
       }
     })
+  }
+
+  async deleteAccount(id : number){
+    const follow = this.prisma.user.update({
+      where : {
+        id : id
+      },
+      data : {
+        following : {
+          set : []
+        },
+        followedBy : {
+          set : []
+        }
+      }
+    });
+    const deleteUser = this.prisma.user.delete({
+      where : {
+        id : id
+      }
+    });
+    const transaction = await this.prisma.$transaction([follow, deleteUser]);
+    //change behaviour to cascade
+    //also remove profile picture
   }
 }
