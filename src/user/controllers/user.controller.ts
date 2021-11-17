@@ -14,6 +14,7 @@ import { SendResetPassLinkDto } from '../dtos/auth-dtos/send-reset-pass-link.dto
 import { AuthService } from 'src/auth/auth.service';
 import * as bcrypt from 'bcrypt';
 import { ChangePassDto } from '../dtos/auth-dtos/change-pass.dto';
+import { User } from '.prisma/client';
 
 @ApiTags('User')
 @Controller('')
@@ -108,15 +109,17 @@ export class UserController {
   }
 
     @UseGuards(JwtAuthGuard)
-    @Delete('')
+    @Delete('user')
     @HttpCode(200)
-    @ApiOperation({description : 'Deletes the given username account.'})
+    @ApiOperation({summary : 'Deletes the given username account.'})
+    @ApiHeader({name : 'Authorization'})
     @ApiOkResponse({description : 'Account deleted!'})
     @ApiBadRequestResponse({description : 'User not found!'})
     @ApiUnauthorizedResponse({description : 'Unauthorized!'})
     async deleteUser(@Request() req){
-        const user = await this.userService.findUserById(req.user.id);
+        const user : User = await this.userService.findUserById(req.user.id);
         if(!user){
+            //jwt is valid after removing account.
             throw new HttpException({
                 statusCode : HttpStatus.BAD_REQUEST,
                 message : 'User not found!'
