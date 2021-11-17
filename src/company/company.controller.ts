@@ -1,34 +1,32 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { CompanyService } from './company.service';
-import { CreateCompanyDto } from './dto/create-company.dto';
-import { UpdateCompanyDto } from './dto/update-company.dto';
+import { CreateCompanyReqDto } from './dto/create-company-req.dto';
+import { ApiBadRequestResponse, ApiCreatedResponse, ApiInternalServerErrorResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { CreateCompanyBadRequestResDto, CreateCompanyCreatedResDto, CreateCompanyUnauthorizedResDto } from './dto/create-company-res.dto';
 
 @Controller('company')
+@ApiTags('Company')
 export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}
 
   @Post()
-  create(@Body() createCompanyDto: CreateCompanyDto) {
-    return this.companyService.create(createCompanyDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.companyService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.companyService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
-    return this.companyService.update(+id, updateCompanyDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.companyService.remove(+id);
+  @ApiOperation({ summary: 'Register a company' })
+  @ApiCreatedResponse({
+    description : 'Company registered.',
+    type: CreateCompanyCreatedResDto
+  })
+  @ApiBadRequestResponse({
+    description : 'Invalid fields',
+    type : CreateCompanyBadRequestResDto
+  })
+  @ApiUnauthorizedResponse({
+    description : 'Username already exists',
+    type:CreateCompanyUnauthorizedResDto
+  })
+  @ApiInternalServerErrorResponse({
+    description : 'Failed to register, try again later.'
+  })
+  async create(@Body() createCompanyReqDto: CreateCompanyReqDto) {
+    return await this.companyService.create(createCompanyReqDto);
   }
 }

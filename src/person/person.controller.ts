@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { PersonService } from './person.service';
-import { CreatePersonDto } from './dto/create-person.dto';
-import { UpdatePersonDto } from './dto/update-person.dto';
-import { ApiBadRequestResponse, ApiCreatedResponse, ApiInternalServerErrorResponse, ApiTags } from '@nestjs/swagger';
+import { CreatePersonReqDto } from './dto/create-person-req.dto';
+import { ApiBadRequestResponse, ApiCreatedResponse, ApiInternalServerErrorResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { CreatePersonCreatedResDto, CreatePersonUnauthorizedResDto, CreatePersonBadRequestResDto } from './dto/create-person-res.dto';
 
 @Controller('person')
 @ApiTags('Person')
@@ -10,37 +10,23 @@ export class PersonController {
   constructor(private readonly personService: PersonService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Register a person' })
   @ApiCreatedResponse({
-    description : 'Person registered.'
+    description : 'Person registered.',
+    type: CreatePersonCreatedResDto
   })
   @ApiBadRequestResponse({
-    description : 'Username already exists. / Invalid fields'
+    description : 'Invalid fields',
+    type : CreatePersonBadRequestResDto
+  })
+  @ApiUnauthorizedResponse({
+    description : 'Username already exists.',
+    type : CreatePersonUnauthorizedResDto
   })
   @ApiInternalServerErrorResponse({
     description : 'Failed to register, try again later.'
   })
-  create(@Body() createPersonDto: CreatePersonDto) {
-    return this.personService.create(createPersonDto);
-  }
-
-  //search person
-  // @Get()
-  // findAll() {
-  //   return this.personService.findAll();
-  // }
-
-  @Get(':username')
-  findOne(@Param('username') username: string) {
-    return this.personService.findOne(username);
-  }
-
-  @Put(':id')
-  update(@Param('id') id: string, @Body() updatePersonDto: UpdatePersonDto) {
-    return this.personService.update(+id, updatePersonDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.personService.remove(+id);
+  async create(@Body() createPersonReqDto: CreatePersonReqDto) {
+    return await this.personService.create(createPersonReqDto);
   }
 }

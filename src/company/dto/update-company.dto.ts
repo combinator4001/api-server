@@ -1,4 +1,4 @@
 import { PartialType } from '@nestjs/swagger';
-import { CreateCompanyDto } from './create-company.dto';
+import { CreateCompanyReqDto } from './create-company-req.dto';
 
-export class UpdateCompanyDto extends PartialType(CreateCompanyDto) {}
+export class UpdateCompanyReqDto extends PartialType(CreateCompanyReqDto) {}

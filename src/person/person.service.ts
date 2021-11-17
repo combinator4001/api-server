@@ -1,16 +1,25 @@
 import { Role } from '.prisma/client';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma.service';
-import { CreatePersonDto } from './dto/create-person.dto';
-import { UpdatePersonDto } from './dto/update-person.dto';
+import { PrismaService } from './../app/prisma.service';
+import { CreatePersonReqDto } from './dto/create-person-req.dto';
 import * as bcrypt from 'bcrypt';
+import { AuthService } from 'src/auth/auth.service';
+import {CreatePersonCreatedResDto} from './dto/create-person-res.dto';
 
 @Injectable()
 export class PersonService {
-  constructor(private prisma : PrismaService){}
+  constructor(
+    private prisma : PrismaService,
+    private authService: AuthService
+  ){}
 
-  async create(createPersonDto: CreatePersonDto) {
-    const {username, password, firstName, lastName, email} = createPersonDto;
+  /**
+   * creates a new person in database.
+   * @param createPersonReqDto 
+   * @returns 201, 401, 500
+   */
+  async create(createPersonReqDto: CreatePersonReqDto) {
+    const {username, password, firstName, lastName, email} = createPersonReqDto;
     
     //Check username exists or not
     let resultUser = await this.prisma.user.findUnique({
@@ -19,9 +28,13 @@ export class PersonService {
       }
     });
     if(resultUser){
+      //401
       //username exists
-      throw new HttpException('Username already exists.', HttpStatus.BAD_REQUEST);
-    }
+      throw new HttpException({
+        statusCode : HttpStatus.UNAUTHORIZED,
+        message : 'Username already exists.'
+      }, HttpStatus.UNAUTHORIZED);
+    }    
 
     //New username
     const saltOrRounds = 10;
@@ -32,39 +45,32 @@ export class PersonService {
         username : username,
         password : hashedPassword,
         role : Role.PERSON,
-
+        email : email,
         person : {
           create: {
             firstName,
             lastName,
-            email
           }
         }
       }
     });
 
     if(resultUser){
-		  return;
+      //201
+      let {id, password, imageName , ...rest} = resultUser;
+      let user : any;
+      user = rest;
+      user.access_token = await this.authService.createToken(resultUser.id, resultUser.username, resultUser.role);
+      user.firstName = firstName;
+      user.lastName = lastName;
+      return new CreatePersonCreatedResDto(user);
 		}
 		else{
-		  throw new HttpException('Failed to register, try again later.', HttpStatus.INTERNAL_SERVER_ERROR);
+      //500
+		  throw new HttpException(        {
+        statusCode : HttpStatus.INTERNAL_SERVER_ERROR,
+        message : 'Failed to register, try again later.'
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-
-  }
-
-  findAll() {
-    return `This action returns all person`;
-  }
-
-  findOne(username: string) {
-    return `This action returns a #${username} person`;
-  }
-
-  update(id: number, updatePersonDto: UpdatePersonDto) {
-    return `This action updates a #${id} person`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} person`;
   }
 }

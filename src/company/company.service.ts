@@ -1,26 +1,76 @@
-import { Injectable } from '@nestjs/common';
-import { CreateCompanyDto } from './dto/create-company.dto';
-import { UpdateCompanyDto } from './dto/update-company.dto';
+import { CreateCompanyReqDto } from './dto/create-company-req.dto';
+import { PrismaService } from 'src/app/prisma.service';
+import { Role } from '.prisma/client';
+import * as bcrypt from 'bcrypt';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { AuthService } from 'src/auth/auth.service';
+import { CreateCompanyCreatedResDto } from './dto/create-company-res.dto';
+
+
 
 @Injectable()
 export class CompanyService {
-  create(createCompanyDto: CreateCompanyDto) {
-    return 'This action adds a new company';
-  }
+  constructor(
+    private prisma : PrismaService,
+    private authService: AuthService
+  ){}
 
-  findAll() {
-    return `This action returns all company`;
-  }
 
-  findOne(id: number) {
-    return `This action returns a #${id} company`;
-  }
+  async create(createCompanyReqDto: CreateCompanyReqDto) {
+    const {username, password, name, email , owners} = createCompanyReqDto;
 
-  update(id: number, updateCompanyDto: UpdateCompanyDto) {
-    return `This action updates a #${id} company`;
-  }
+    //Check username exists or not
+    let resultUser = await this.prisma.user.findUnique({
+      where : {
+        username
+      }
+    });
+    if(resultUser){
+      //401
+      //username exists
+      throw new HttpException({
+        statusCode : HttpStatus.UNAUTHORIZED,
+        message : 'Username already exists.'
+      }, HttpStatus.UNAUTHORIZED);
+    }
+    
+    //New username
+    const saltOrRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltOrRounds);
 
-  remove(id: number) {
-    return `This action removes a #${id} company`;
+
+    resultUser = await this.prisma.user.create({
+      data:{
+        username : username,
+        password : hashedPassword,
+        role : Role.COMPANY,
+        email : email,
+        company : {
+          create: {
+            name,
+            owners
+          }
+        }
+      }
+    });
+
+
+    if(resultUser){
+      //201
+      let {id, password, imageName , ...rest} = resultUser;
+      let user : any;
+      user = rest;
+      user.access_token = await this.authService.createToken(resultUser.id, resultUser.username, resultUser.role);
+      user.name = name;
+      user.owners = owners;
+      return new CreateCompanyCreatedResDto(user);
+		}
+		else{
+      //500
+		  throw new HttpException(        {
+        statusCode : HttpStatus.INTERNAL_SERVER_ERROR,
+        message : 'Failed to register, try again later.'
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
   }
 }
