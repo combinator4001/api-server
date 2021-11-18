@@ -1,11 +1,12 @@
-import { Role } from '.prisma/client';
+import { Person, Role, User } from '.prisma/client';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from './../app/prisma.service';
 import { CreatePersonReqDto } from './dto/create-person-req.dto';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from 'src/auth/auth.service';
 import {CreatePersonCreatedResDto} from './dto/create-person-res.dto';
-
+import { UpdatePersonReqDto } from './dto/update-person-req.dto';
+import { saltOrRounds } from 'src/variables';
 @Injectable()
 export class PersonService {
   constructor(
@@ -72,5 +73,49 @@ export class PersonService {
         message : 'Failed to register, try again later.'
       }, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
+  }
+
+  async update(id : number ,updatePersonReqDto : UpdatePersonReqDto){
+    const personUser : User & { person : Person } = await this.prisma.user.findUnique({
+      where : {
+        id : id
+      },
+      include : {
+        person : true
+      }
+    })
+
+    const hashedPassword = updatePersonReqDto.password ? await bcrypt.hash(updatePersonReqDto.password, saltOrRounds) : personUser.password;
+
+    const updatedPersonUser = await this.prisma.user.update({
+      where : {
+        id : id
+      },
+      data : {
+        password : hashedPassword,
+        email : updatePersonReqDto.email ?? personUser.email,
+        showEmail : updatePersonReqDto.showEmail ?? personUser.showEmail,
+        bio : updatePersonReqDto.bio ?? personUser.bio,
+        person : {
+          update : {
+            firstName : updatePersonReqDto.firstName ?? personUser.person.firstName,
+            lastName : updatePersonReqDto.lastName ?? personUser.person.lastName
+          }
+        }
+      }
+    });
+  }
+
+  async findPersonUserById(id : number){
+    const personUser : User & { person : Person } = await this.prisma.user.findUnique({
+      where : {
+        id : id
+      },
+      include : {
+        person : true
+      }
+    })
+    if(!personUser) return null;
+    return personUser;
   }
 }
