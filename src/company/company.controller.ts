@@ -55,8 +55,8 @@ export class CompanyController {
     }
     try{
       await this.companyService.update(req.user.id, updateCompanyReqDto);
-      const result = await this.companyService.findPersonUserById(req.user.id);
-      return new UpdateCompanyResDto(result, result.person);
+      const result = await this.companyService.findCompanyUserById(req.user.id);
+      return new UpdateCompanyResDto(result, result.company);
     }catch(e){
       console.log(e);
       throw new InternalServerErrorException();
