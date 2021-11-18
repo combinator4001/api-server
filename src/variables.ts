@@ -10,6 +10,9 @@ export const passwordMaxLength = 100;
 export const nameMinLength = 1;
 export const nameMaxLength = 50;
 
+// bcrypt
+export const saltOrRounds = 10;
+
 //jwt expirations
 
 export const frontServerUrl : string = 'http://localhost:3000';
