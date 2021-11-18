@@ -16,26 +16,22 @@ export class UpdatePersonResDto{
 
     @ApiProperty()
     // 4.
-    role: Role;
-
-    @ApiProperty()
-    // 5.
     firstName : string;
     
     @ApiProperty()
-    // 6.
+    // 5.
     lastName : string;
 
     @ApiProperty()
-    // 7.
+    // 6.
     email: string;
 
     @ApiProperty({example : false})
-    // 8.
+    // 7.
     showEmail : boolean;
 
     @ApiProperty()
-    // 9.
+    // 8.
     bio: string;
 
     constructor(userPart : User, personPart : Person){
@@ -44,7 +40,6 @@ export class UpdatePersonResDto{
         this.statusCode = 200;
         this.message = 'Profile updated.';
         this.username = username;
-        this.role = role;
         this.email = email;
         this.showEmail = showEmail;
         this.bio = bio;
