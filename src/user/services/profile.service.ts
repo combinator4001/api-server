@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { basename, join } from "path";
 import { PrismaService } from "src/app/prisma.service";
-const { S3Client, PutObjectCommand, CreateBucketCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const fs = require('fs');
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -72,5 +72,43 @@ export class ProfileService{
             imageUrl : imageUrl
           }
         })
+    }
+
+    async deletePreviousImage(userId : number){
+        // Create an S3 client service object
+        const s3 = new S3Client({
+            region: 'default',
+            endpoint: process.env.endpoint as string,
+            credentials: {
+                accessKeyId: process.env.accessKey as string,
+                secretAccessKey: process.env.secretKey as string,
+            }
+        });
+
+        const resultUser = await this.prisma.user.findUnique({
+            where : {
+                id : userId
+            }
+        });
+
+        if(!resultUser.imageUrl) return;
+
+        // call S3 to retrieve upload file to specified bucket
+        const run = async () => {
+            try {
+                const data = await s3.send(
+                    new DeleteObjectCommand({
+                        Bucket: 'combinator-profile-images',
+                        Key: basename(resultUser.imageUrl)
+                    })
+                );
+                console.log('Success', data);
+            } catch (err) {
+                console.log('Error', err);
+            }
+        };
+
+        run();
+
     }
 }

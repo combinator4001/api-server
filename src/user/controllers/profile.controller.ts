@@ -60,6 +60,7 @@ export class ProfileController{
         if(await isFileExtensionSafe(fullImagePath)){
   
           //200
+          await this.profileService.deletePreviousImage(req.user.id);
           await this.profileService.uploadImage(fullImagePath);
           const imageUrl = imageStorageUrl + '/' + file.filename;
           await this.profileService.updateImageUrl(req.user.id, imageUrl);  
