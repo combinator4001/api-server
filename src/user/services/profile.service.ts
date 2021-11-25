@@ -14,7 +14,7 @@ export class ProfileService{
      * Uploads the image to the storage.
      * @param fullImagePath 
      */
-    async updateImage(fullImagePath : string){
+    async uploadImage(fullImagePath : string){
         // Create an S3 client service object
         const s3 = new S3Client({
             region: 'default',
@@ -58,14 +58,19 @@ export class ProfileService{
         await run();
     }
 
-    async updateUserImagePathById(userId, imageUrl){
+    /**
+     * updates image url in database.
+     * @param userId 
+     * @param imageUrl 
+     */
+    async updateImageUrl(userId, imageUrl){
         await this.prisma.user.update({
           where : {
             id : userId
-          },
-          data : {
+        },
+        data : {
             imageUrl : imageUrl
           }
         })
-      }
+    }
 }
