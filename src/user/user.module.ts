@@ -6,18 +6,22 @@ import { FollowingService } from './services/following.service';
 import { FollowingController } from './controllers/following.controller';
 import { FollowersController } from './controllers/followers.controller';
 import { FollowersService } from './services/followers.service';
+import { ProfileController } from './controllers/profile.controller';
+import { ProfileService } from './services/profile.service';
 
 @Module({
   imports : [AuthModule],
   controllers: [
     UserController,
     FollowingController, 
-    FollowersController
+    FollowersController,
+    ProfileController
   ],
   providers: [
     UserService,
     FollowingService,
-    FollowersService
+    FollowersService,
+    ProfileService
   ]
 })
 export class UserModule {}
