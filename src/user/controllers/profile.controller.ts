@@ -6,6 +6,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { isFileExtensionSafe, removeFile, saveImageToStorage } from './../helpers/profile-image.storage';
 import { join } from 'path';
 import { ImageUploadDto } from './../dtos/image-upload.dto';
+import { imageStorageUrl } from 'src/variables';
 
 @ApiTags('User / Profile')
 @Controller()
@@ -60,13 +61,13 @@ export class ProfileController{
   
           //200
           await this.profileService.updateImage(fullImagePath);
-          this.profileService.updateUserImagePathById(req.user.id, fileName);  
+          // this.profileService.updateUserImagePathById(req.user.id, fileName - imageUrl);  
           removeFile(fullImagePath);
 
           return {
             statusCode : HttpStatus.OK,
             message : 'Profile image updated!',
-            imageLink : "arvan.storage"
+            imageUrl : imageStorageUrl + '/' + file.filename
           };
         }
         else{

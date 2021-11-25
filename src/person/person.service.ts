@@ -58,7 +58,7 @@ export class PersonService {
 
     if(resultUser){
       //201
-      let {id, password, imageName , ...rest} = resultUser;
+      let {id, password, imageUrl , ...rest} = resultUser;
       let user : any;
       user = rest;
       user.access_token = await this.authService.createToken(resultUser.id, resultUser.username, resultUser.role);

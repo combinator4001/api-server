@@ -58,13 +58,13 @@ export class ProfileService{
         await run();
     }
 
-    async updateUserImagePathById(userId, imageName){
+    async updateUserImagePathById(userId, imageUrl){
         await this.prisma.user.update({
           where : {
             id : userId
           },
           data : {
-            imageName : imageName
+            imageUrl : imageUrl
           }
         })
       }

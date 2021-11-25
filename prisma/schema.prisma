@@ -29,7 +29,7 @@ model User {
   email String
 
   showEmail     Boolean @default(false)
-  imageName     String  @default("")
+  imageUrl      String  @default("")
   bio           String  @default("")
   blogs         Blog[]
   followedBy    User[]  @relation("UserFollows", references: [id], onDelete: Cascade)

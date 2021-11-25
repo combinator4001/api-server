@@ -16,3 +16,4 @@ export const saltOrRounds = 10;
 //jwt expirations
 
 export const frontServerUrl : string = 'http://localhost:3000';
+export const imageStorageUrl : string = 'https://combinator-profile-images.s3.ir-thr-at1.arvanstorage.com';
