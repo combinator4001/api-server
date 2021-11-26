@@ -7,6 +7,7 @@ import { isFileExtensionSafe, removeFile, saveImageToStorage } from './../helper
 import { join } from 'path';
 import { ImageUploadDto } from './../dtos/image-upload.dto';
 import { imageStorageUrl } from 'src/variables';
+import { ImageUploadResDto } from "../dtos/image-upload-res.dto";
 
 @ApiTags('User / Profile')
 @Controller()
@@ -36,7 +37,10 @@ export class ProfileController{
       description: 'Attach the image file',
       type: ImageUploadDto
     })
-    @ApiCreatedResponse({description : 'Profile image updated!'})
+    @ApiCreatedResponse({
+      description : 'Profile image updated!',
+      type : ImageUploadResDto
+    })
     @ApiBadRequestResponse({description : 'File must be a png, jpg/jpeg. |  Invalid file.'})
     @ApiPayloadTooLargeResponse({description : 'File too large. File should be less than 300KiB.'})
     async updateImage(@UploadedFile() file: Express.Multer.File, @Request() req){
@@ -66,11 +70,7 @@ export class ProfileController{
           await this.profileService.updateImageUrl(req.user.id, imageUrl);  
           removeFile(fullImagePath);
 
-          return {
-            statusCode : HttpStatus.OK,
-            message : 'Profile image updated!',
-            imageUrl : imageUrl
-          };
+          return new ImageUploadResDto(imageUrl);
         }
         else{
   
