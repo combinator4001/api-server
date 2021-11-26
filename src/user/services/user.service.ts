@@ -46,17 +46,6 @@ export class UserService {
     }
   }
 
-  async updateUserImagePathById(userId, imageName){
-    await this.prisma.user.update({
-      where : {
-        id : userId
-      },
-      data : {
-        imageName : imageName
-      }
-    })
-  }
-
   /**
    * finds an unique user by the given username.
    * @param username 
