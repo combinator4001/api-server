@@ -30,7 +30,7 @@ model User {
   person  Person?
   company Company?
 
-  posts      Post[]
+  blogs      Blog[]
   followedBy User[] @relation("UserFollows", references: [id], onDelete: Cascade)
   following  User[] @relation("UserFollows", references: [id])
 }
@@ -59,7 +59,7 @@ model Company {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-model Post {
+model Blog {
   id               Int           @id @default(autoincrement())
   author_id        Int
   estimatedMinutes Int
@@ -67,7 +67,7 @@ model Post {
   lastModify       DateTime      @default(now())
   title            String
   contentUrl       String
-  tags             TagsOnPosts[]
+  tags             TagsOnBlogs[]
 
   author User @relation(fields: [author_id], references: [id], onDelete: Cascade)
 }
@@ -75,15 +75,15 @@ model Post {
 model Tag {
   id    Int           @id @default(autoincrement())
   name  String        @unique
-  posts TagsOnPosts[]
+  blogs TagsOnBlogs[]
 }
 
 //join table
-model TagsOnPosts {
-  post_id Int
-  post    Post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+model TagsOnBlogs {
+  blog_id Int
+  blog    Blog @relation(fields: [blog_id], references: [id], onDelete: Cascade)
   tag_id  Int
   tag     Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade)
 
-  @@id([post_id, tag_id])
+  @@id([blog_id, tag_id])
 }
