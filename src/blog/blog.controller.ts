@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Post, Put, UseGuards, Request } from '@nestjs/common';
-import { ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiUnauthorizedResponse, ApiBadRequestResponse, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { basename } from 'path';
 import { JwtAuthGuard } from 'src/auth/general/jwt-auth.guard';
 import { blogStorageUrl } from 'src/variables';
@@ -14,8 +14,11 @@ export class BlogController {
     @Post()
     @UseGuards(JwtAuthGuard)
     @ApiHeader({name : 'Authorization'})
+    @ApiCreatedResponse({description : 'Posted!'})
+    @ApiBadRequestResponse({description : 'Invalid fields!'})
+    @ApiUnauthorizedResponse({description : 'Unauthorized!'})
     async createBlog(@Body() body : CreatePostDto, @Request() req){
-        
+
         const fullBlogPath = this.blogService.createLocalHtml(body.content);
         this.blogService.sendToStorage(fullBlogPath);
         const contentUrl = blogStorageUrl + '/' + basename(fullBlogPath);
