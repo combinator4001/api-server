@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class CreatePostDto{
+export class CreateBlogDto{
     @ApiProperty()
     @IsString()
     title : string;

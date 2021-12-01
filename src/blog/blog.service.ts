@@ -7,6 +7,8 @@ const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/cl
 import * as dotenv from 'dotenv';
 import { Blog } from '.prisma/client';
 import { User } from '@prisma/client';
+import { UpdateBlogReqDto } from './dtos/update-blog-req.dto';
+import { blogStorageUrl } from 'src/variables';
 dotenv.config();
 
 @Injectable()
@@ -102,6 +104,7 @@ export class BlogService {
     async getBlog(blogId: number){
         const blog:  Blog & {
             author: {
+                id: number
                 username: string
             }
         } = await this.prisma.blog.findUnique({
@@ -111,6 +114,7 @@ export class BlogService {
             include : {
                 author : {
                     select : {
+                        id : true,
                         username : true
                     }
                 }
@@ -118,5 +122,35 @@ export class BlogService {
         });
 
         return blog;
+    }
+
+    async userIsAuthorized(userId: number, blogId: number): Promise<Boolean>{
+        const blog = await this.getBlog(blogId);
+        if(!blog) return false;
+        return blog.author.id === userId;
+    }
+
+    async updateBlog(blogId: number, updateBlogReqDto: UpdateBlogReqDto){
+        const oldBlog: Blog = await this.prisma.blog.findUnique({
+            where: {
+                id: blogId
+            }
+        });
+
+        const fullBlogPath = this.createLocalHtml(updateBlogReqDto.content);
+        this.sendToStorage(fullBlogPath);
+        const contentUrl = blogStorageUrl + '/' + basename(fullBlogPath);
+
+        await this.prisma.blog.update({
+            where: {
+                id: blogId
+            },
+            data: {
+                lastModify: new Date(),
+                estimatedMinutes: updateBlogReqDto.estimatedMinutes ?? oldBlog.estimatedMinutes,
+                title: updateBlogReqDto.title ?? oldBlog.title,
+                contentUrl: contentUrl
+            }
+        });
     }
 }

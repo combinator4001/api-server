@@ -1,11 +1,12 @@
-import { Body, Controller, Delete, Get, Post, UseGuards, Request, Param, NotFoundException, ParseIntPipe, Patch } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, UseGuards, Request, Param, NotFoundException, ParseIntPipe, Patch, UnauthorizedException } from '@nestjs/common';
 import { ApiCreatedResponse, ApiUnauthorizedResponse, ApiBadRequestResponse, ApiHeader, ApiTags, ApiOkResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { basename } from 'path';
 import { JwtAuthGuard } from 'src/auth/general/jwt-auth.guard';
 import { blogStorageUrl } from 'src/variables';
 import { BlogService } from './blog.service';
-import { CreatePostDto } from './dtos/create-post.dto';
+import { CreateBlogDto } from './dtos/create-post.dto';
 import { GetBlogResDto } from './dtos/get-blog-res.dto';
+import { UpdateBlogReqDto } from './dtos/update-blog-req.dto';
 
 @ApiTags('Blog')
 @Controller('blog')
@@ -19,7 +20,7 @@ export class BlogController {
     @ApiCreatedResponse({description : 'Posted!'})
     @ApiBadRequestResponse({description : 'Invalid fields!'})
     @ApiUnauthorizedResponse({description : 'Unauthorized!'})
-    async createBlog(@Body() body : CreatePostDto, @Request() req){
+    async createBlog(@Body() body : CreateBlogDto, @Request() req){
 
         const fullBlogPath = this.blogService.createLocalHtml(body.content);
         this.blogService.sendToStorage(fullBlogPath);
@@ -63,8 +64,17 @@ export class BlogController {
     }
 
     @Patch(':id')
-    updateBlog(@Param('id', ParseIntPipe) id: number){
-
+    @UseGuards(JwtAuthGuard)
+    @ApiHeader({name : 'Authorization'})
+    @ApiOperation({summary: 'Updates a blog post.'})
+    @ApiOkResponse({description: 'Updated!'})
+    @ApiBadRequestResponse({description: 'Invalid fields!'})
+    @ApiUnauthorizedResponse({description: 'Unauthorized!'})
+    async updateBlog(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateBlogReqDto, @Request() req){
+        if(!await this.blogService.userIsAuthorized(req.user.id, id)){
+            throw new UnauthorizedException();
+        }
+        await this.blogService.updateBlog(id, body);
     }
 
     @Delete(':id')
