@@ -141,6 +141,7 @@ export class BlogService {
         this.sendToStorage(fullBlogPath);
         const contentUrl = blogStorageUrl + '/' + basename(fullBlogPath);
 
+        await this.deleteFromStorage(blogId);
         await this.prisma.blog.update({
             where: {
                 id: blogId
@@ -155,10 +156,47 @@ export class BlogService {
     }
 
     async deleteBlog(blogId: number){
+        await this.deleteFromStorage(blogId);
         await this.prisma.blog.delete({
             where: {
                 id: blogId
             }
         });
+    }
+
+    private async deleteFromStorage(blogId : number){
+        // Create an S3 client service object
+        const s3 = new S3Client({
+            region: 'default',
+            endpoint: process.env.endpoint as string,
+            credentials: {
+                accessKeyId: process.env.accessKey as string,
+                secretAccessKey: process.env.secretKey as string,
+            }
+        });
+
+        const blog = await this.prisma.blog.findUnique({
+            where : {
+                id : blogId
+            }
+        });
+
+        // call S3 to retrieve upload file to specified bucket
+        const run = async () => {
+            try {
+                const data = await s3.send(
+                    new DeleteObjectCommand({
+                        Bucket: 'combinator-blogs',
+                        Key: basename(blog.contentUrl)
+                    })
+                );
+                console.log('Success', data);
+            } catch (err) {
+                console.log('Error', err);
+            }
+        };
+
+        run();
+
     }
 }
