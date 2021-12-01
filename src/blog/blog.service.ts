@@ -5,6 +5,8 @@ const fs = require('fs');
 import { v4 as uuidv4 } from 'uuid';
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 import * as dotenv from 'dotenv';
+import { Blog } from '.prisma/client';
+import { User } from '@prisma/client';
 dotenv.config();
 
 @Injectable()
@@ -95,5 +97,26 @@ export class BlogService {
                 }
             }
         })
-    }    
+    }
+
+    async getBlog(blogId: number){
+        const blog:  Blog & {
+            author: {
+                username: string
+            }
+        } = await this.prisma.blog.findUnique({
+            where : {
+                id : blogId
+            },
+            include : {
+                author : {
+                    select : {
+                        username : true
+                    }
+                }
+            }
+        });
+
+        return blog;
+    }
 }

@@ -1,10 +1,11 @@
-import { Body, Controller, Delete, Get, Post, Put, UseGuards, Request } from '@nestjs/common';
-import { ApiCreatedResponse, ApiUnauthorizedResponse, ApiBadRequestResponse, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Post, Put, UseGuards, Request, Param, NotFoundException, ParseIntPipe } from '@nestjs/common';
+import { ApiCreatedResponse, ApiUnauthorizedResponse, ApiBadRequestResponse, ApiHeader, ApiTags, ApiOkResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { basename } from 'path';
 import { JwtAuthGuard } from 'src/auth/general/jwt-auth.guard';
 import { blogStorageUrl } from 'src/variables';
 import { BlogService } from './blog.service';
 import { CreatePostDto } from './create-post.dto';
+import { GetBlogResDto } from './get-blog-res.dto';
 
 @ApiTags('Blog')
 @Controller('blog')
@@ -13,6 +14,7 @@ export class BlogController {
 
     @Post()
     @UseGuards(JwtAuthGuard)
+    @ApiOperation({summary : 'Creates a new blog post.'})
     @ApiHeader({name : 'Authorization'})
     @ApiCreatedResponse({description : 'Posted!'})
     @ApiBadRequestResponse({description : 'Invalid fields!'})
@@ -36,8 +38,28 @@ export class BlogController {
     }
 
     @Get(':id')
-    getBlog(){
-
+    @ApiOperation({summary : 'Returns a blog info based on the given id.'})
+    @ApiOkResponse({
+        description : 'Found it!',
+        type : GetBlogResDto
+    })
+    @ApiBadRequestResponse({description : 'Invalid request!'})
+    @ApiNotFoundResponse({description : 'Not found!'})
+    async getBlog(@Param('id', ParseIntPipe) id: number){
+        const blog = await this.blogService.getBlog(id);
+        if(!blog){
+            throw new NotFoundException();
+        }
+        return new GetBlogResDto(
+            blog.id,
+            blog.title,
+            blog.author.username,
+            blog.estimatedMinutes,
+            blog.createdAt,
+            blog.lastModify,
+            blog.contentUrl,
+            []
+        )
     }
 
     @Put(':id')
