@@ -1,11 +1,11 @@
-import { Body, Controller, Delete, Get, Post, Put, UseGuards, Request, Param, NotFoundException, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, UseGuards, Request, Param, NotFoundException, ParseIntPipe, Patch } from '@nestjs/common';
 import { ApiCreatedResponse, ApiUnauthorizedResponse, ApiBadRequestResponse, ApiHeader, ApiTags, ApiOkResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { basename } from 'path';
 import { JwtAuthGuard } from 'src/auth/general/jwt-auth.guard';
 import { blogStorageUrl } from 'src/variables';
 import { BlogService } from './blog.service';
-import { CreatePostDto } from './create-post.dto';
-import { GetBlogResDto } from './get-blog-res.dto';
+import { CreatePostDto } from './dtos/create-post.dto';
+import { GetBlogResDto } from './dtos/get-blog-res.dto';
 
 @ApiTags('Blog')
 @Controller('blog')
@@ -62,8 +62,8 @@ export class BlogController {
         )
     }
 
-    @Put(':id')
-    updateBlog(){
+    @Patch(':id')
+    updateBlog(@Param('id', ParseIntPipe) id: number){
 
     }
 
