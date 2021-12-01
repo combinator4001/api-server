@@ -153,4 +153,12 @@ export class BlogService {
             }
         });
     }
+
+    async deleteBlog(blogId: number){
+        await this.prisma.blog.delete({
+            where: {
+                id: blogId
+            }
+        });
+    }
 }

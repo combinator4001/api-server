@@ -78,7 +78,16 @@ export class BlogController {
     }
 
     @Delete(':id')
-    deleteBlog(){
-
+    @UseGuards(JwtAuthGuard)
+    @ApiHeader({name : 'Authorization'})
+    @ApiOperation({summary: 'Deletes a blog post.'})
+    @ApiOkResponse({description: 'Deleted!'})
+    @ApiBadRequestResponse({description : 'Not a number id'})
+    @ApiUnauthorizedResponse({description: 'Unauthorized!'})
+    async deleteBlog(@Param('id', ParseIntPipe) id: number, @Request() req){
+        if(!await this.blogService.userIsAuthorized(req.user.id, id)){
+            throw new UnauthorizedException();
+        }
+        await this.blogService.deleteBlog(id);
     }
 }
