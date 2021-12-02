@@ -115,28 +115,4 @@ export class UserService {
       }
     })
   }
-
-  async deleteAccount(id : number){
-    const follow = this.prisma.user.update({
-      where : {
-        id : id
-      },
-      data : {
-        following : {
-          set : []
-        },
-        followedBy : {
-          set : []
-        }
-      }
-    });
-    const deleteUser = this.prisma.user.delete({
-      where : {
-        id : id
-      }
-    });
-    const transaction = await this.prisma.$transaction([follow, deleteUser]);
-    //change behaviour to cascade
-    //also remove profile picture
-  }
 }

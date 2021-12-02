@@ -1,5 +1,5 @@
-import { Controller, Get, HttpCode, HttpException, HttpStatus, Put, Request, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiCreatedResponse, ApiHeader, ApiOperation, ApiPayloadTooLargeResponse, ApiTags } from "@nestjs/swagger";
+import { Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Put, Request, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiCreatedResponse, ApiHeader, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/auth/general/jwt-auth.guard";
 import { ProfileService } from "../services/profile.service";
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -8,6 +8,7 @@ import { join } from 'path';
 import { ImageUploadDto } from './../dtos/image-upload.dto';
 import { imageStorageUrl } from 'src/variables';
 import { ImageUploadResDto } from "../dtos/image-upload-res.dto";
+import { User } from "@prisma/client";
 
 @ApiTags('User / Profile')
 @Controller()
@@ -30,14 +31,14 @@ export class ProfileController{
     @UseInterceptors(
       FileInterceptor('image', saveImageToStorage)
     )
-    @ApiOperation({description : 'Updates profile image.'})
+    @ApiOperation({summary : 'Updates profile image.'})
     @ApiHeader({name : 'Authorization'})
     @ApiConsumes('multipart/form-data')
     @ApiBody({
       description: 'Attach the image file',
       type: ImageUploadDto
     })
-    @ApiCreatedResponse({
+    @ApiOkResponse({
       description : 'Profile image updated!',
       type : ImageUploadResDto
     })
@@ -85,4 +86,28 @@ export class ProfileController{
       }
 
     }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('user')
+  @HttpCode(200)
+  @ApiOperation({summary : 'Deletes the given username account.'})
+  @ApiHeader({name : 'Authorization'})
+  @ApiOkResponse({description : 'Account deleted!'})
+  @ApiBadRequestResponse({description : 'User not found!'})
+  @ApiUnauthorizedResponse({description : 'Unauthorized!'})
+  async deleteUser(@Request() req){
+      const user : User = await this.profileService.findUserById(req.user.id);
+      if(!user){
+          //jwt is valid after removing account.
+          throw new HttpException({
+              statusCode : HttpStatus.BAD_REQUEST,
+              message : 'User not found!'
+          }, HttpStatus.BAD_REQUEST);
+      }
+      await this.profileService.deleteAccount(user.id);
+      return {
+          statusCode : 200,
+          message : 'Account deleted!'
+      };
+  }
 }

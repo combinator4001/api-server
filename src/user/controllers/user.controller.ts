@@ -92,31 +92,4 @@ export class UserController {
             message : 'Password updated!'
         }
     }
-
-
-  // Profile section
-
-    @UseGuards(JwtAuthGuard)
-    @Delete('user')
-    @HttpCode(200)
-    @ApiOperation({summary : 'Deletes the given username account.'})
-    @ApiHeader({name : 'Authorization'})
-    @ApiOkResponse({description : 'Account deleted!'})
-    @ApiBadRequestResponse({description : 'User not found!'})
-    @ApiUnauthorizedResponse({description : 'Unauthorized!'})
-    async deleteUser(@Request() req){
-        const user : User = await this.userService.findUserById(req.user.id);
-        if(!user){
-            //jwt is valid after removing account.
-            throw new HttpException({
-                statusCode : HttpStatus.BAD_REQUEST,
-                message : 'User not found!'
-            }, HttpStatus.BAD_REQUEST);
-        }
-        await this.userService.deleteAccount(user.id);
-        return {
-            statusCode : 200,
-            message : 'Account deleted!'
-        };
-    }
 }

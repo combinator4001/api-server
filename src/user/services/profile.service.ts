@@ -4,6 +4,7 @@ import { PrismaService } from "src/app/prisma.service";
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const fs = require('fs');
 import * as dotenv from 'dotenv';
+import { User } from "@prisma/client";
 dotenv.config();
 
 @Injectable()
@@ -111,4 +112,45 @@ export class ProfileService{
         run();
 
     }
+
+        /**
+   * finds an unique user by the given username.
+   * @param username 
+   * @returns User or null
+   */
+	async findUserById(id : number) : Promise< User | null > {
+        const user = await this.prisma.user.findUnique({
+          where : {
+            id : id
+          }
+        })
+    
+        if(!user) return null;
+    
+        return user;
+      }
+
+    async deleteAccount(id : number){
+        const follow = this.prisma.user.update({
+          where : {
+            id : id
+          },
+          data : {
+            following : {
+              set : []
+            },
+            followedBy : {
+              set : []
+            }
+          }
+        });
+        const deleteUser = this.prisma.user.delete({
+          where : {
+            id : id
+          }
+        });
+        const transaction = await this.prisma.$transaction([follow, deleteUser]);
+        //change behaviour to cascade
+        //also remove profile picture
+      }
 }
