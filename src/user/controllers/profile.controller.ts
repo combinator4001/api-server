@@ -1,5 +1,5 @@
-import { Controller, Get, HttpCode, HttpException, HttpStatus, Put, Request, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiCreatedResponse, ApiHeader, ApiOperation, ApiPayloadTooLargeResponse, ApiTags } from "@nestjs/swagger";
+import { Controller, Delete, Get, HttpCode, HttpException, HttpStatus, NotFoundException, Param, Put, Request, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/auth/general/jwt-auth.guard";
 import { ProfileService } from "../services/profile.service";
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -8,6 +8,9 @@ import { join } from 'path';
 import { ImageUploadDto } from './../dtos/image-upload.dto';
 import { imageStorageUrl } from 'src/variables';
 import { ImageUploadResDto } from "../dtos/image-upload-res.dto";
+import { Role, User } from "@prisma/client";
+import { GetPrivateCompanyProfile, GetPrivatePersonProfile } from './../dtos/get-my-profile-res.dto';
+import { GetPublicCompanyProfile, GetPublicPersonProfile } from './../dtos/get-public-profile-res.dto';
 
 @ApiTags('User / Profile')
 @Controller()
@@ -15,13 +18,88 @@ export class ProfileController{
     constructor(private profileService : ProfileService){}
 
     @Get('/:username/profile')
-    getProfile(){
-
+    @ApiOperation({summary : 'Returns public profile inofs.'})
+    @ApiExtraModels(GetPublicCompanyProfile, GetPublicPersonProfile)
+    @ApiOkResponse({
+      description: 'Profile returned!',
+      schema: {
+        oneOf: [
+          {$ref: getSchemaPath(GetPublicCompanyProfile)},
+          {$ref: getSchemaPath(GetPublicPersonProfile)}
+        ]
+      }
+    })
+    @ApiNotFoundResponse({description: 'Not found!'})
+    async getProfile(@Param('username') username: string){
+      const result = await this.profileService.getProfileByUsername(username);
+      if(!result) throw new NotFoundException();
+      if(result.role === Role.PERSON){
+        return new GetPublicPersonProfile(
+          result.username,
+          result.email,
+          result.showEmail,
+          result.imageUrl,
+          result.bio,
+          result.role,
+          result.person.firstName,
+          result.person.lastName,
+        );
+      }
+      else if(result.role === Role.COMPANY){
+        return new GetPublicCompanyProfile(
+          result.username,
+          result.email,
+          result.showEmail,
+          result.imageUrl,
+          result.bio,
+          result.role,
+          result.company.name,
+          result.company.owners
+        );
+      }
     }
 
-    @Get('/me/profile')
-    getMyProfile(){
-
+    @UseGuards(JwtAuthGuard)
+    @Get('/me')
+    @ApiOperation({summary : 'Returns private profile inofs.'})
+    @ApiHeader({name : 'Authorization'})
+    @ApiExtraModels(GetPrivatePersonProfile, GetPrivateCompanyProfile)
+    @ApiOkResponse({
+      description: 'Profile returned!',
+      schema: {
+        oneOf: [
+          {$ref: getSchemaPath(GetPrivatePersonProfile)},
+          {$ref: getSchemaPath(GetPrivateCompanyProfile)}
+        ]
+      }
+    })
+    @ApiUnauthorizedResponse({description : 'Unauthorized!'})
+    async getMyProfile(@Request() req){
+      const result = await this.profileService.getProfileById(req.user.id);
+      if(result.role === Role.PERSON){
+        return new GetPrivatePersonProfile(
+          result.username,
+          result.email,
+          result.showEmail,
+          result.imageUrl,
+          result.bio,
+          result.role,
+          result.person.firstName,
+          result.person.lastName,
+        );
+      }
+      else if(result.role === Role.COMPANY){
+        return new GetPrivateCompanyProfile(
+          result.username,
+          result.email,
+          result.showEmail,
+          result.imageUrl,
+          result.bio,
+          result.role,
+          result.company.name,
+          result.company.owners
+        );
+      }
     }
 
     @UseGuards(JwtAuthGuard)
@@ -30,14 +108,14 @@ export class ProfileController{
     @UseInterceptors(
       FileInterceptor('image', saveImageToStorage)
     )
-    @ApiOperation({description : 'Updates profile image.'})
+    @ApiOperation({summary : 'Updates profile image.'})
     @ApiHeader({name : 'Authorization'})
     @ApiConsumes('multipart/form-data')
     @ApiBody({
       description: 'Attach the image file',
       type: ImageUploadDto
     })
-    @ApiCreatedResponse({
+    @ApiOkResponse({
       description : 'Profile image updated!',
       type : ImageUploadResDto
     })
@@ -85,4 +163,28 @@ export class ProfileController{
       }
 
     }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('user')
+  @HttpCode(200)
+  @ApiOperation({summary : 'Deletes the given username account.'})
+  @ApiHeader({name : 'Authorization'})
+  @ApiOkResponse({description : 'Account deleted!'})
+  @ApiBadRequestResponse({description : 'User not found!'})
+  @ApiUnauthorizedResponse({description : 'Unauthorized!'})
+  async deleteUser(@Request() req){
+      const user : User = await this.profileService.findUserById(req.user.id);
+      if(!user){
+          //jwt is valid after removing account.
+          throw new HttpException({
+              statusCode : HttpStatus.BAD_REQUEST,
+              message : 'User not found!'
+          }, HttpStatus.BAD_REQUEST);
+      }
+      await this.profileService.deleteAccount(user.id);
+      return {
+          statusCode : 200,
+          message : 'Account deleted!'
+      };
+  }
 }
