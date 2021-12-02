@@ -1,5 +1,5 @@
 import { Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Put, Request, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiCreatedResponse, ApiHeader, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
+import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/auth/general/jwt-auth.guard";
 import { ProfileService } from "../services/profile.service";
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -8,7 +8,8 @@ import { join } from 'path';
 import { ImageUploadDto } from './../dtos/image-upload.dto';
 import { imageStorageUrl } from 'src/variables';
 import { ImageUploadResDto } from "../dtos/image-upload-res.dto";
-import { User } from "@prisma/client";
+import { Role, User } from "@prisma/client";
+import { GetPrivateCompanyProfile, GetPrivatePersonProfile } from './../dtos/get-my-profile-res.dto';
 
 @ApiTags('User / Profile')
 @Controller()
@@ -20,9 +21,47 @@ export class ProfileController{
 
     }
 
-    @Get('/me/profile')
-    getMyProfile(){
-
+    @UseGuards(JwtAuthGuard)
+    @Get('/me')
+    @ApiOperation({summary : 'Returns private profile inofs.'})
+    @ApiHeader({name : 'Authorization'})
+    @ApiExtraModels(GetPrivatePersonProfile, GetPrivateCompanyProfile)
+    @ApiOkResponse({
+      description: 'Profile returned!',
+      schema: {
+        oneOf: [
+          {$ref: getSchemaPath(GetPrivatePersonProfile)},
+          {$ref: getSchemaPath(GetPrivateCompanyProfile)}
+        ]
+      }
+    })
+    @ApiUnauthorizedResponse({description : 'Unauthorized!'})
+    async getMyProfile(@Request() req){
+      const result: any = await this.profileService.getCompleteProfile(req.user.id, req.user.role);
+      if(result.role === Role.PERSON){
+        return new GetPrivatePersonProfile(
+          result.username,
+          result.email,
+          result.showEmail,
+          result.imageUrl,
+          result.bio,
+          result.role,
+          result.person.firstName,
+          result.person.lastName,
+        );
+      }
+      else if(result.role === Role.COMPANY){
+        return new GetPrivateCompanyProfile(
+          result.username,
+          result.email,
+          result.showEmail,
+          result.imageUrl,
+          result.bio,
+          result.role,
+          result.company.name,
+          result.company.owners
+        );
+      }
     }
 
     @UseGuards(JwtAuthGuard)

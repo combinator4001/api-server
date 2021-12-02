@@ -4,7 +4,7 @@ import { PrismaService } from "src/app/prisma.service";
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const fs = require('fs');
 import * as dotenv from 'dotenv';
-import { User } from "@prisma/client";
+import { Person, Role, User } from "@prisma/client";
 dotenv.config();
 
 @Injectable()
@@ -113,7 +113,7 @@ export class ProfileService{
 
     }
 
-        /**
+    /**
    * finds an unique user by the given username.
    * @param username 
    * @returns User or null
@@ -128,7 +128,7 @@ export class ProfileService{
         if(!user) return null;
     
         return user;
-      }
+    }
 
     async deleteAccount(id : number){
         const follow = this.prisma.user.update({
@@ -151,6 +151,30 @@ export class ProfileService{
         });
         const transaction = await this.prisma.$transaction([follow, deleteUser]);
         //change behaviour to cascade
-        //also remove profile picture
-      }
+    }
+
+    async getCompleteProfile(id: number, role: Role){
+        if(role === Role.PERSON){
+            const personUser = await this.prisma.user.findUnique({
+                where: {
+                    id
+                },
+                include: {
+                    person: true
+                }
+            });
+            return personUser;
+        }
+        else if(role === Role.COMPANY){
+            const companyUser = await this.prisma.user.findUnique({
+                where: {
+                    id
+                },
+                include: {
+                    company: true
+                }
+            });
+            return companyUser;
+        }
+    }
 }
