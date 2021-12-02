@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { BlogModule } from 'src/blog/blog.module';
 import { PersonModule } from 'src/person/person.module';
 import { CompanyModule } from '../company/company.module';
 import { UserModule } from '../user/user.module';
@@ -9,7 +10,8 @@ import { GlobalModule } from './global.module';
             GlobalModule,
             UserModule,
             PersonModule,
-            CompanyModule
+            CompanyModule,
+            BlogModule
         ]
 })
 export class AppModule {}

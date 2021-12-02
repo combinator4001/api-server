@@ -1,8 +1,9 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
-import { CreatePersonReqDto } from './create-person-req.dto';
+import { CreateCompanyReqDto } from './create-company-req.dto';
 
-export class UpdatePersonReqDto extends PartialType(CreatePersonReqDto) {
+
+export class UpdateCompanyReqDto extends PartialType(CreateCompanyReqDto) {
     @ApiProperty({required : false})
     @IsOptional()
     @IsBoolean()

@@ -1,10 +1,12 @@
 import { CreateCompanyReqDto } from './dto/create-company-req.dto';
 import { PrismaService } from 'src/app/prisma.service';
-import { Role } from '.prisma/client';
+import { Company , Role , User } from '.prisma/client';
 import * as bcrypt from 'bcrypt';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
 import { CreateCompanyCreatedResDto } from './dto/create-company-res.dto';
+import { saltOrRounds } from 'src/variables';
+import { UpdateCompanyReqDto } from './dto/update-company-req.dto';
 
 
 
@@ -15,7 +17,11 @@ export class CompanyService {
     private authService: AuthService
   ){}
 
-
+  /**
+   * creates a new company in database.
+   * @param createCompanyReqDto 
+   * @returns 201, 401, 500
+   */
   async create(createCompanyReqDto: CreateCompanyReqDto) {
     const {username, password, name, email , owners} = createCompanyReqDto;
 
@@ -57,7 +63,7 @@ export class CompanyService {
 
     if(resultUser){
       //201
-      let {id, password, imageName , ...rest} = resultUser;
+      let {id, password, imageUrl , ...rest} = resultUser;
       let user : any;
       user = rest;
       user.access_token = await this.authService.createToken(resultUser.id, resultUser.username, resultUser.role);
@@ -73,4 +79,52 @@ export class CompanyService {
       }, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
   }
+
+  async update(id : number ,updateCompanyReqDto : UpdateCompanyReqDto){
+    const companyUser : User & { company : Company } = await this.prisma.user.findUnique({
+      where : {
+        id : id
+      },
+      include : {
+        company : true
+      }
+    })
+
+    const hashedPassword = updateCompanyReqDto.password ? await bcrypt.hash(updateCompanyReqDto.password, saltOrRounds) : companyUser.password;
+
+    const updatedCompanyUser = await this.prisma.user.update({
+      where : {
+        id : id
+      },
+      data : {
+        password : hashedPassword,
+        email : updateCompanyReqDto.email ?? companyUser.email,
+        showEmail : updateCompanyReqDto.showEmail ?? companyUser.showEmail,
+        bio : updateCompanyReqDto.bio ?? companyUser.bio,
+        company : {
+          update : {
+            name : updateCompanyReqDto.name ?? companyUser.company.name,
+            owners : updateCompanyReqDto.owners ?? companyUser.company.owners
+          }
+        }
+      }
+    });
+  }
+
+  async findCompanyUserById(id : number){
+    const companyUser : User & { company : Company } = await this.prisma.user.findUnique({
+      where : {
+        id : id
+      },
+      include : {
+        company : true
+      }
+    })
+    if(!companyUser) return null;
+    return companyUser;
+  }
+
+
+
+
 }
