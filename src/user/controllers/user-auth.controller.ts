@@ -2,16 +2,15 @@ import { Controller, Post, Get, Request, Body, UseGuards, Delete, UseInterceptor
 import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiCreatedResponse, ApiExtraModels, ApiHeader, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/general/jwt-auth.guard';
 import { LocalAuthGuard } from 'src/auth/general/local-auth.guard';
-import { UserService } from './../services/user.service';
+import { UserService } from './../services/user-auth.service';
 import { LoginReqDto } from './../dtos/login-req.dto';
 import { LoginPersonResDto, LoginCompanyResDto, FailedLoginDto } from './../dtos/login-res.dto';
 import { ForgetPassJwtAuthGuard } from 'src/auth/forget-pass/forget-pass-jwt-auth.guard';
 import { SendResetPassLinkDto } from '../dtos/auth-dtos/send-reset-pass-link.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { ChangePassDto } from '../dtos/auth-dtos/change-pass.dto';
-import { User } from '.prisma/client';
 
-@ApiTags('User')
+@ApiTags('User / Auth')
 @Controller('')
 export class UserController {
     constructor(
