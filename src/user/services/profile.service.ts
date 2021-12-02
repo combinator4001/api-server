@@ -4,7 +4,7 @@ import { PrismaService } from "src/app/prisma.service";
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const fs = require('fs');
 import * as dotenv from 'dotenv';
-import { Person, Role, User } from "@prisma/client";
+import { Company, Person, Role, User } from "@prisma/client";
 dotenv.config();
 
 @Injectable()
@@ -176,5 +176,19 @@ export class ProfileService{
             });
             return companyUser;
         }
+    }
+
+    async getProfileByUsername(username: string){
+        const user = await this.prisma.user.findUnique({
+            where: {
+                username
+            },
+            include:{
+                person: true,
+                company: true
+            }
+        });
+        if(!user) return null;
+        return user;
     }
 }

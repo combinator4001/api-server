@@ -1,5 +1,5 @@
-import { Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Put, Request, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from "@nestjs/swagger";
+import { Controller, Delete, Get, HttpCode, HttpException, HttpStatus, NotFoundException, Param, Put, Request, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/auth/general/jwt-auth.guard";
 import { ProfileService } from "../services/profile.service";
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -10,6 +10,7 @@ import { imageStorageUrl } from 'src/variables';
 import { ImageUploadResDto } from "../dtos/image-upload-res.dto";
 import { Role, User } from "@prisma/client";
 import { GetPrivateCompanyProfile, GetPrivatePersonProfile } from './../dtos/get-my-profile-res.dto';
+import { GetPublicCompanyProfile, GetPublicPersonProfile } from './../dtos/get-public-profile-res.dto';
 
 @ApiTags('User / Profile')
 @Controller()
@@ -17,8 +18,45 @@ export class ProfileController{
     constructor(private profileService : ProfileService){}
 
     @Get('/:username/profile')
-    getProfile(){
-
+    @ApiOperation({summary : 'Returns public profile inofs.'})
+    @ApiExtraModels(GetPublicCompanyProfile, GetPublicPersonProfile)
+    @ApiOkResponse({
+      description: 'Profile returned!',
+      schema: {
+        oneOf: [
+          {$ref: getSchemaPath(GetPublicCompanyProfile)},
+          {$ref: getSchemaPath(GetPublicPersonProfile)}
+        ]
+      }
+    })
+    @ApiNotFoundResponse({description: 'Not found!'})
+    async getProfile(@Param('username') username: string){
+      const result = await this.profileService.getProfileByUsername(username);
+      if(!result) throw new NotFoundException();
+      if(result.role === Role.PERSON){
+        return new GetPublicPersonProfile(
+          result.username,
+          result.email,
+          result.showEmail,
+          result.imageUrl,
+          result.bio,
+          result.role,
+          result.person.firstName,
+          result.person.lastName,
+        );
+      }
+      else if(result.role === Role.COMPANY){
+        return new GetPublicCompanyProfile(
+          result.username,
+          result.email,
+          result.showEmail,
+          result.imageUrl,
+          result.bio,
+          result.role,
+          result.company.name,
+          result.company.owners
+        );
+      }
     }
 
     @UseGuards(JwtAuthGuard)

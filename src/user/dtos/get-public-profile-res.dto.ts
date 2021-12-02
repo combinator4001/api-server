@@ -1,7 +1,7 @@
 import { Role } from ".prisma/client";
 import { ApiProperty } from "@nestjs/swagger";
 
-class GetMyProfile{
+class GetPublicProfile{
     @ApiProperty({ default : 200})
     private statusCode : number;
 
@@ -11,11 +11,8 @@ class GetMyProfile{
     @ApiProperty()
     username: string;
 
-    @ApiProperty()
+    @ApiProperty({description: 'If showEmail option is false, then it will return null.'})
     email: string;
-
-    @ApiProperty({example : false})
-    showEmail : boolean;
 
     @ApiProperty()
     imageUrl: string;
@@ -37,15 +34,14 @@ class GetMyProfile{
         this.statusCode = 200;
         this.message = 'Fetched profile successfully!';
         this.username = username;
-        this.email = email;
-        this.showEmail = showEmail;
+        this.email = showEmail ? email : null;
         this.imageUrl = imageUrl;
         this.bio = bio;
         this.role = role;
     }
 }
 
-export class GetPrivateCompanyProfile extends GetMyProfile{
+export class GetPublicCompanyProfile extends GetPublicProfile{
     @ApiProperty()
     name: string;
 
@@ -75,7 +71,7 @@ export class GetPrivateCompanyProfile extends GetMyProfile{
     }
 }
 
-export class GetPrivatePersonProfile extends GetMyProfile{
+export class GetPublicPersonProfile extends GetPublicProfile{
     @ApiProperty()
     firstName : string;
     
