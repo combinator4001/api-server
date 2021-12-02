@@ -8,7 +8,6 @@ import { JwtAuthGuard } from 'src/auth/general/jwt-auth.guard';
 import { Role } from '.prisma/client';
 import {UpdateCompanyResDto} from './dto/update-company-res.dto';
 
-
 @Controller('company')
 @ApiTags('Company')
 export class CompanyController {
