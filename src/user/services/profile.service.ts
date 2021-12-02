@@ -153,29 +153,18 @@ export class ProfileService{
         //change behaviour to cascade
     }
 
-    async getCompleteProfile(id: number, role: Role){
-        if(role === Role.PERSON){
-            const personUser = await this.prisma.user.findUnique({
-                where: {
-                    id
-                },
-                include: {
-                    person: true
-                }
-            });
-            return personUser;
-        }
-        else if(role === Role.COMPANY){
-            const companyUser = await this.prisma.user.findUnique({
-                where: {
-                    id
-                },
-                include: {
-                    company: true
-                }
-            });
-            return companyUser;
-        }
+    async getProfileById(id: number){
+        const user = await this.prisma.user.findUnique({
+            where: {
+                id
+            },
+            include: {
+                person: true,
+                company: true
+            }
+        });
+        if(!user) return null;
+        return user;
     }
 
     async getProfileByUsername(username: string){

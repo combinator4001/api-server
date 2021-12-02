@@ -75,7 +75,7 @@ export class ProfileController{
     })
     @ApiUnauthorizedResponse({description : 'Unauthorized!'})
     async getMyProfile(@Request() req){
-      const result: any = await this.profileService.getCompleteProfile(req.user.id, req.user.role);
+      const result = await this.profileService.getProfileById(req.user.id);
       if(result.role === Role.PERSON){
         return new GetPrivatePersonProfile(
           result.username,
