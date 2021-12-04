@@ -4,7 +4,8 @@ import { PrismaService } from "src/app/prisma.service";
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const fs = require('fs');
 import * as dotenv from 'dotenv';
-import { Company, Person, Role, User } from "@prisma/client";
+import { Blog, Company, Person, Role, User } from "@prisma/client";
+import { GetBlogsDto } from "../dtos/get-blogs.dto";
 dotenv.config();
 
 @Injectable()
@@ -179,5 +180,32 @@ export class ProfileService{
         });
         if(!user) return null;
         return user;
+    }
+
+    async getUserByUsername(username: string): Promise<User | null>{
+        const user = await this.prisma.user.findUnique({
+            where: {
+                username
+            }
+        });
+        if(!user) return null;
+        return user;
+    }
+
+    async getBlogsList(authorId: number){
+        const blogs : Blog[] = await this.prisma.blog.findMany({
+            where: {
+                author_id: authorId
+            }
+        });
+        const result = blogs.map(blog => new GetBlogsDto(
+                blog.id,
+                blog.title,
+                blog.estimatedMinutes,
+                blog.createdAt,
+                blog.lastModify
+            )
+        );
+        return result;
     }
 }
