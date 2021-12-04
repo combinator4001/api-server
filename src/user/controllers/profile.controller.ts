@@ -11,6 +11,7 @@ import { ImageUploadResDto } from "../dtos/image-upload-res.dto";
 import { Role, User } from "@prisma/client";
 import { GetPrivateCompanyProfile, GetPrivatePersonProfile } from './../dtos/get-my-profile-res.dto';
 import { GetPublicCompanyProfile, GetPublicPersonProfile } from './../dtos/get-public-profile-res.dto';
+import { GetBlogsDto } from "../dtos/get-blogs.dto";
 
 @ApiTags('User / Profile')
 @Controller()
@@ -186,5 +187,21 @@ export class ProfileController{
           statusCode : 200,
           message : 'Account deleted!'
       };
+  }
+
+  @Get('/:username/blogs')
+  @ApiOperation({summary : 'Returns written blogs of the given user.'})
+  @ApiOkResponse({
+    description: 'Fetched blogs successfully!',
+    type: GetBlogsDto,
+    isArray: true
+  })
+  @ApiNotFoundResponse({description: 'There is no user with that username.'})
+  async getBlogs(@Param('username') username: string){
+    const user = await this.profileService.getUserByUsername(username);
+    if(!user){
+      throw new NotFoundException();
+    }
+    return this.profileService.getBlogsList(user.id);
   }
 }
