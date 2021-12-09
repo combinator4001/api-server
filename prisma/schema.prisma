@@ -17,14 +17,15 @@ enum Role {
 }
 
 model User {
-  id        Int     @id @default(autoincrement())
-  username  String  @unique
-  password  String
-  email     String
-  showEmail Boolean @default(false)
-  imageUrl  String  @default("")
-  bio       String  @default("")
-  role      Role
+  id            Int     @id @default(autoincrement())
+  username      String  @unique
+  password      String
+  email         String  @unique
+  showEmail     Boolean @default(false)
+  verifiedEmail Boolean @default(true)
+  imageUrl      String  @default("")
+  bio           String  @default("")
+  role          Role
 
   admin   Admin?
   person  Person?
