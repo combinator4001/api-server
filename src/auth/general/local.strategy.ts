@@ -1,6 +1,6 @@
 import { Strategy } from 'passport-local';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from '../auth.service';
 import { Role } from '@prisma/client';
 
@@ -19,6 +19,12 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     const user = await this.authService.findUser(username, password);
     if (!user) {
       throw new UnauthorizedException();
+    }
+    if(!user.verifiedEmail){
+      return {
+        statusCode: HttpStatus.UNAUTHORIZED,
+        message: 'Please verify your email first!'
+      }
     }
     return user;
   }

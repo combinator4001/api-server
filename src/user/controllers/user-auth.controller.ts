@@ -40,10 +40,7 @@ export class UserController {
             ]
         }
     })
-    @ApiUnauthorizedResponse({
-        description : 'Unauthorized.',
-        type : FailedLoginDto
-    })
+    @ApiUnauthorizedResponse({description : 'Unauthorized. - Please verify your email first!'})
     async login(@Request() req, @Body() body : LoginReqDto ) {
         return await this.userService.login(req.user);
     }
