@@ -145,7 +145,20 @@ export class UserController {
     @Put('auth/verify')
     @ApiOperation({summary : 'verifies email.'})
     @ApiHeader({name : 'Authorization'})
-    verifyEmail(@Request() req){
-
+    @ApiOkResponse({description: 'Email verified!'})
+    @ApiUnauthorizedResponse({description: 'Unauthorized'})
+    async verifyEmail(@Request() req){
+        await this.prisma.user.update({
+            where: {
+                id: req.user.id
+            },
+            data: {
+                verifiedEmail: true
+            }
+        });
+        return {
+            statusCode : HttpStatus.OK,
+            message : 'Email verified!'
+        };
     }
 }
