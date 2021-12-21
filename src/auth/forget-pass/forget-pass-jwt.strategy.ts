@@ -31,10 +31,7 @@ export class ForgetPassJwtStrategy extends PassportStrategy(Strategy, 'forgetPas
   async validate(payload: Payload) {
     const tokenIsUsed = await this.authService.forgetTokenIsUsed(payload.id, payload.hashedPassLastTenChars);
     if(tokenIsUsed){
-      throw new HttpException({
-        statusCode : HttpStatus.UNAUTHORIZED,
-        message : 'Unauthorized!'
-      }, HttpStatus.UNAUTHORIZED);
+      throw new HttpException('Unauthorized!', HttpStatus.UNAUTHORIZED);
     }
     return { 
       id: payload.id, 
