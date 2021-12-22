@@ -31,6 +31,7 @@ export class UserService {
       user.access_token = token;
       user.firstName = result.firstName;
       user.lastName = result.lastName;
+      console.log(user);
       return new LoginPersonResDto(user);
     }
     else if(user.role === Role.COMPANY){

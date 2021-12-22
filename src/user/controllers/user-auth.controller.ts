@@ -46,7 +46,7 @@ export class UserController {
     }
 
     @Post('auth/password')
-    @ApiOperation({summary : 'sends reset password link.'})
+    @ApiOperation({summary : 'sends a reset password link.'})
     @ApiCreatedResponse({description : 'Email has been sent!'})
     @ApiBadRequestResponse({description : 'Username not found!'})
     async sendResetPassEmail(@Body() body: SendResetPassLinkDto) {
@@ -98,7 +98,7 @@ export class UserController {
 
     @Post('auth/verify')
     @HttpCode(200)
-    @ApiOperation({summary : 'sends verify email link.'})
+    @ApiOperation({summary : 'sends a verify email link.'})
     @ApiOkResponse({description: 'If provided email is valid, we will send you an email!'})
     @ApiBadRequestResponse({description : 'An email must be given.'})
     async sendVerifyEmail(@Body() body: SendVerifyEmailLinkDto) {
@@ -131,7 +131,7 @@ export class UserController {
             <br>
             If you did not make this request then please ignore this email.
         `;
-        await this.emailService.sendOneMail(user.email, 'Password reset', htmlBody);
+        await this.emailService.sendOneMail(user.email, 'Email verify', htmlBody);
         return {
             statusCode : HttpStatus.OK,
             message : 'If provided email is valid, we will send you an email!'
