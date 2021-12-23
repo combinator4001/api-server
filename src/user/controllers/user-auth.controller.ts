@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Request, Body, UseGuards, Delete, UseInterceptors, UploadedFile, HttpStatus, Put, HttpCode, HttpException, Param } from '@nestjs/common';
+import { Controller, Post, Get, Request, Body, UseGuards, Delete, UseInterceptors, UploadedFile, HttpStatus, Put, HttpCode, HttpException, Param, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiCreatedResponse, ApiExtraModels, ApiHeader, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/general/jwt-auth.guard';
 import { LocalAuthGuard } from 'src/auth/general/local-auth.guard';
@@ -9,13 +9,20 @@ import { ForgetPassJwtAuthGuard } from 'src/auth/forget-pass/forget-pass-jwt-aut
 import { SendResetPassLinkDto } from '../dtos/auth-dtos/send-reset-pass-link.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { ChangePassDto } from '../dtos/auth-dtos/change-pass.dto';
+import { SendVerifyEmailLinkDto } from '../dtos/auth-dtos/send-verify-email-link.dto';
+import { PrismaService } from 'src/app/prisma.service';
+import { EmailService } from 'src/app/email.service';
+import { apiServerUrl, frontServerUrl } from 'src/variables';
+import { EmailVerifyJwtAuthGuard } from 'src/auth/verify-email/verify-email-jwt-auth.guard';
 
 @ApiTags('User / Auth')
 @Controller('')
 export class UserController {
     constructor(
         private userService: UserService,
-        private authService : AuthService
+        private authService: AuthService,
+        private prisma: PrismaService,
+        private emailService : EmailService
     ) {}
 
     //Auth section
@@ -33,16 +40,13 @@ export class UserController {
             ]
         }
     })
-    @ApiUnauthorizedResponse({
-        description : 'Unauthorized.',
-        type : FailedLoginDto
-    })
+    @ApiUnauthorizedResponse({description : 'Unauthorized. - Please verify your email first!'})
     async login(@Request() req, @Body() body : LoginReqDto ) {
         return await this.userService.login(req.user);
     }
 
     @Post('auth/password')
-    @ApiOperation({summary : 'sends reset password link.'})
+    @ApiOperation({summary : 'sends a reset password link.'})
     @ApiCreatedResponse({description : 'Email has been sent!'})
     @ApiBadRequestResponse({description : 'Username not found!'})
     async sendResetPassEmail(@Body() body: SendResetPassLinkDto) {
@@ -90,5 +94,68 @@ export class UserController {
             statusCode : HttpStatus.OK,
             message : 'Password updated!'
         }
+    }
+
+    @Post('auth/verify')
+    @HttpCode(200)
+    @ApiOperation({summary : 'sends a verify email link.'})
+    @ApiOkResponse({description: 'If provided email is valid, we will send you an email!'})
+    @ApiBadRequestResponse({description : 'An email must be given.'})
+    async sendVerifyEmail(@Body() body: SendVerifyEmailLinkDto) {
+        const user = await this.prisma.user.findUnique({
+            where: {
+                email: body.email
+            }
+        });
+
+        if(!user || user.verifiedEmail === true){
+            return {
+                statusCode : HttpStatus.OK,
+                message : 'If provided email is valid, we will send you an email!'
+            };
+        }
+
+        const verifyEmailToken = await this.authService.createVerifyEmailToken(
+            user.id,
+            user.username,
+            user.role,
+            user.verifiedEmail
+        );
+
+        const link = frontServerUrl + '/verify' + '?token=' + verifyEmailToken;
+        const htmlBody : string = `
+            <h1>Email verification</h1>
+            <br>
+            <p>Hello ${user.username}</p>
+            <p>You registered an account on Combinator.com, before being able to use your account you need to verify that this is your email address by clicking here: <a href="${link}">Verify</a></p>
+            <br>
+            If you did not make this request then please ignore this email.
+        `;
+        await this.emailService.sendOneMail(user.email, 'Email verify', htmlBody);
+        return {
+            statusCode : HttpStatus.OK,
+            message : 'If provided email is valid, we will send you an email!'
+        };
+    }
+
+    @UseGuards(EmailVerifyJwtAuthGuard)
+    @Put('auth/verify')
+    @ApiOperation({summary : 'verifies email.'})
+    @ApiHeader({name : 'Authorization'})
+    @ApiOkResponse({description: 'Email verified!'})
+    @ApiUnauthorizedResponse({description: 'Unauthorized'})
+    async verifyEmail(@Request() req){
+        await this.prisma.user.update({
+            where: {
+                id: req.user.id
+            },
+            data: {
+                verifiedEmail: true
+            }
+        });
+        return {
+            statusCode : HttpStatus.OK,
+            message : 'Email verified!'
+        };
     }
 }
