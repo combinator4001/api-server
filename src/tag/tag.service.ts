@@ -6,6 +6,7 @@ import { UpdateTagDto } from './dto/update-tag.dto';
 @Injectable()
 export class TagService {
   constructor(private prisma : PrismaService){}
+  
   async create(createTagDto: CreateTagDto) {
     return await this.prisma.tag.create({
       data: {
@@ -14,8 +15,13 @@ export class TagService {
     });
   }
 
-  findAll() {
-    return `This action returns all tag`;
+  async findMany(page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    const take = limit;
+    return await this.prisma.tag.findMany({
+      skip: skip,
+      take: take
+    })
   }
 
   findOne(id: number) {
