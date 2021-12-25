@@ -71,7 +71,18 @@ export class TagController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.tagService.remove(+id);
+  @ApiOperation({summary: "Deletes the tag with the given id."})
+  @ApiOkResponse({description: "Tag deleted successfully!"})
+  @ApiBadRequestResponse({description: "The id with the given tag, has not found!"})
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    try {
+      await this.tagService.remove(id);
+      return {
+        statusCode: HttpStatus.OK,
+        message: "Tag deleted successfully!"
+      }
+    } catch {
+      throw new BadRequestException("The id with the given tag, has not found!");
+    }
   }
 }
