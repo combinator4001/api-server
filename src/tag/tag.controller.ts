@@ -54,8 +54,20 @@ export class TagController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTagDto: UpdateTagDto) {
-    return this.tagService.update(+id, updateTagDto);
+  @ApiOperation({summary: "Updates name of a tag."})
+  @ApiOkResponse({description: "Name changed successfully!"})
+  @ApiBadRequestResponse({description: "Invalid id! | Invalid name!"})
+  async update(@Param('id', ParseIntPipe) id: number, @Body() updateTagDto: UpdateTagDto) {
+    try{
+      await this.tagService.update(id, updateTagDto.newName);
+      return {
+        statusCode: HttpStatus.OK,
+        message: "Name changed successfully!"
+      };
+    }
+    catch{
+      throw new BadRequestException("Invalid id!");
+    }
   }
 
   @Delete(':id')

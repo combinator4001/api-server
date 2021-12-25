@@ -6,7 +6,7 @@ import { UpdateTagDto } from './dto/update-tag.dto';
 @Injectable()
 export class TagService {
   constructor(private prisma : PrismaService){}
-  
+
   async create(createTagDto: CreateTagDto) {
     return await this.prisma.tag.create({
       data: {
@@ -21,15 +21,18 @@ export class TagService {
     return await this.prisma.tag.findMany({
       skip: skip,
       take: take
-    })
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} tag`;
-  }
-
-  update(id: number, updateTagDto: UpdateTagDto) {
-    return `This action updates a #${id} tag`;
+  async update(id: number, newName: string) {
+    return await this.prisma.tag.update({
+      where: {
+        id: id
+      },
+      data: {
+        name: newName
+      }
+    });
   }
 
   remove(id: number) {
