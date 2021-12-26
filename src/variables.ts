@@ -23,3 +23,13 @@ export const apiServerUrl : string = 'http://localhost:5000';
 //tags
 export const tagNameMinLength = 2;
 export const tagNameMaxLength = 20;
+
+//blog
+export const titleMinLength = 3;
+export const titleMaxLength = 50;
+
+export const blogContentMinLength = 5;
+export const blogContentMaxLength = 5000;
+
+export const estimatedMinutesMin = 1;
+export const estimatedMinutesMax = 24 * 60;

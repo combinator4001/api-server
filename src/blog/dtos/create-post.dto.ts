@@ -1,17 +1,42 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsInt, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import * as vars from './../../variables';
 
 export class CreateBlogDto{
-    @ApiProperty()
+    @ApiProperty({
+        minLength : vars.titleMinLength,
+        maxLength : vars.titleMaxLength,
+    })
     @IsString()
+    @MinLength(vars.titleMinLength, {
+        message : `Title must be at least ${vars.titleMinLength} characters.`,
+    })
+    @MaxLength(vars.titleMaxLength, {
+        message : `Title must be at most ${vars.titleMaxLength} characters.`
+    })
     title : string;
     
-    @ApiProperty()
+    @ApiProperty({
+        minLength : vars.blogContentMinLength,
+        maxLength : vars.blogContentMaxLength,
+    })
     @IsString()
-    content : string;
+    @MinLength(vars.blogContentMinLength, {
+        message: `Content must be at least ${vars.blogContentMinLength} characters.`,
+    })
+    @MaxLength(vars.blogContentMaxLength, {
+        message: `Content must be at most ${vars.blogContentMaxLength} characters.`
+    })
+    content: string;
 
-    @ApiProperty()
-    @IsNumber()
+    @ApiProperty({
+        description: 'Maximum is one day!',
+        minimum: vars.estimatedMinutesMin,
+        maximum: vars.estimatedMinutesMax
+    })
+    @IsInt()
+    @Min(vars.estimatedMinutesMin)
+    @Max(vars.estimatedMinutesMax)
     estimatedMinutes : number;
 
     @ApiProperty({
@@ -22,6 +47,6 @@ export class CreateBlogDto{
         }
     })
     @IsArray()
-    @IsNumber({},{each: true})
-    tagIds : number[];
+    @IsInt({each: true})
+    tagIds : number[]
 }
