@@ -87,13 +87,29 @@ export class BlogController {
     @Patch(':id')
     @UseGuards(JwtAuthGuard)
     @ApiHeader({name : 'Authorization'})
-    @ApiOperation({summary: 'Updates a blog post.'})
+    @ApiOperation({
+        summary: 'Updates a blog post.',
+        description: 'If you dont want update tags, then simply send a json without tagIds key.'
+    })
     @ApiOkResponse({description: 'Updated!'})
     @ApiBadRequestResponse({description: 'Invalid fields!'})
     @ApiUnauthorizedResponse({description: 'Unauthorized!'})
     async updateBlog(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateBlogReqDto, @Request() req){
+        //check if the user is owner of that post
         if(!await this.blogService.userIsAuthorized(req.user.id, id)){
             throw new UnauthorizedException();
+        }
+        if(body.tagIds){
+            for(const tagId of body.tagIds){
+                const result = await this.prisma.tag.findFirst({
+                    where: {
+                        id: tagId
+                    }
+                });
+                if(!result){
+                    throw new BadRequestException(`There is no tag associated with ${tagId}`);
+                }
+            }
         }
         await this.blogService.updateBlog(id, body);
     }

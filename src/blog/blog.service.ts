@@ -104,7 +104,7 @@ export class BlogService {
                     }
                 }
             }
-        })
+        });
     }
 
     async getBlog(blogId: number){
@@ -148,22 +148,51 @@ export class BlogService {
             }
         });
 
-        const fullBlogPath = this.createLocalHtml(updateBlogReqDto.content);
-        this.sendToStorage(fullBlogPath);
-        const contentUrl = blogStorageUrl + '/' + basename(fullBlogPath);
+        if(updateBlogReqDto.content){
+            const fullBlogPath = this.createLocalHtml(updateBlogReqDto.content);
+            this.sendToStorage(fullBlogPath);
+            const contentUrl = blogStorageUrl + '/' + basename(fullBlogPath);
+            await this.deleteFromStorage(blogId);
+            await this.prisma.blog.update({
+                where: {
+                    id: blogId
+                },
+                data: {
+                    lastModify: new Date(),
+                    estimatedMinutes: updateBlogReqDto.estimatedMinutes ?? oldBlog.estimatedMinutes,
+                    title: updateBlogReqDto.title ?? oldBlog.title,
+                    contentUrl: contentUrl
+                }
+            });
+        }else{
+            await this.prisma.blog.update({
+                where: {
+                    id: blogId
+                },
+                data: {
+                    lastModify: new Date(),
+                    estimatedMinutes: updateBlogReqDto.estimatedMinutes ?? oldBlog.estimatedMinutes,
+                    title: updateBlogReqDto.title ?? oldBlog.title
+                }
+            });
+        }
 
-        await this.deleteFromStorage(blogId);
-        await this.prisma.blog.update({
-            where: {
-                id: blogId
-            },
-            data: {
-                lastModify: new Date(),
-                estimatedMinutes: updateBlogReqDto.estimatedMinutes ?? oldBlog.estimatedMinutes,
-                title: updateBlogReqDto.title ?? oldBlog.title,
-                contentUrl: contentUrl
-            }
-        });
+        if(updateBlogReqDto.tagIds){
+            await this.prisma.tagsOnBlogs.deleteMany({
+                where: {
+                    blog_id: blogId
+                }
+            });
+            const relations = updateBlogReqDto.tagIds.map((id: number) => {
+                return {
+                    blog_id: blogId,
+                    tag_id: id
+                };
+            });
+            await this.prisma.tagsOnBlogs.createMany({
+                data: relations
+            });
+        }
     }
 
     async deleteBlog(blogId: number){
