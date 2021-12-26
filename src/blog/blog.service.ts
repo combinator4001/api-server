@@ -108,20 +108,25 @@ export class BlogService {
     }
 
     async getBlog(blogId: number){
-        const blog:  Blog & {
-            author: {
-                id: number
-                username: string
-            }
-        } = await this.prisma.blog.findUnique({
-            where : {
-                id : blogId
+        const blog = await this.prisma.blog.findUnique({
+            where: {
+                id: blogId
             },
-            include : {
-                author : {
-                    select : {
-                        id : true,
-                        username : true
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        username: true
+                    }
+                },
+                tags: {
+                    select: {
+                        tag_id: true,
+                        tag: {
+                            select: {
+                                name: true
+                            }
+                        }
                     }
                 }
             }

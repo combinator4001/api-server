@@ -66,6 +66,12 @@ export class BlogController {
         if(!blog){
             throw new NotFoundException();
         }
+        const tags = blog.tags.map(item => {
+            return {
+                id: item.tag_id,
+                name: item.tag.name
+            }
+        });
         return new GetBlogResDto(
             blog.id,
             blog.title,
@@ -74,8 +80,8 @@ export class BlogController {
             blog.createdAt,
             blog.lastModify,
             blog.contentUrl,
-            []
-        )
+            tags
+        );
     }
 
     @Patch(':id')

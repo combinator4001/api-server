@@ -1,5 +1,13 @@
 import { ApiProperty } from "@nestjs/swagger"
 
+class Tag{
+    @ApiProperty()
+    id: number
+    
+    @ApiProperty()
+    name: string
+}
+
 export class GetBlogResDto{
     @ApiProperty()
     id : number
@@ -22,8 +30,11 @@ export class GetBlogResDto{
     @ApiProperty()
     contentUrl : string
 
-    @ApiProperty()
-    tags : string[]
+    @ApiProperty({
+        type: Tag,
+        isArray: true
+    })
+    tags : Tag[]
 
     constructor(
         id : number,
@@ -33,7 +44,7 @@ export class GetBlogResDto{
         createdAt : Date,
         lastModify : Date,
         contentUrl : string,
-        tags : string[]
+        tags : Tag[]
     ){
         this.id = id;
         this.title = title;
