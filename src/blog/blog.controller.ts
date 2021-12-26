@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, Post, UseGuards, Request, Param, NotFoundException, ParseIntPipe, Patch, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, UseGuards, Request, Param, NotFoundException, ParseIntPipe, Patch, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { ApiCreatedResponse, ApiUnauthorizedResponse, ApiBadRequestResponse, ApiHeader, ApiTags, ApiOkResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { basename } from 'path';
+import { PrismaService } from 'src/app/prisma.service';
 import { JwtAuthGuard } from 'src/auth/general/jwt-auth.guard';
 import { blogStorageUrl } from 'src/variables';
 import { BlogService } from './blog.service';
@@ -11,7 +12,10 @@ import { UpdateBlogReqDto } from './dtos/update-blog-req.dto';
 @ApiTags('Blog')
 @Controller('blog')
 export class BlogController {
-    constructor(private blogService : BlogService){}
+    constructor(
+        private blogService: BlogService,
+        private prisma: PrismaService
+    ){}
 
     @Post()
     @UseGuards(JwtAuthGuard)
@@ -21,6 +25,16 @@ export class BlogController {
     @ApiBadRequestResponse({description : 'Invalid fields!'})
     @ApiUnauthorizedResponse({description : 'Unauthorized!'})
     async createBlog(@Body() body : CreateBlogDto, @Request() req){
+        for(const tagId of body.tagIds){
+            const result = await this.prisma.tag.findFirst({
+                where: {
+                    id: tagId
+                }
+            });
+            if(!result){
+                throw new BadRequestException(`There is no tag associated with ${tagId}`);
+            }
+        }
 
         const fullBlogPath = this.blogService.createLocalHtml(body.content);
         this.blogService.sendToStorage(fullBlogPath);
@@ -29,7 +43,8 @@ export class BlogController {
             req.user.id,
             body.estimatedMinutes,
             body.title,
-            contentUrl
+            contentUrl,
+            body.tagIds
         );
 
         return {

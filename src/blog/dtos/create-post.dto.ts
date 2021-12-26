@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsString } from 'class-validator';
 
 export class CreateBlogDto{
     @ApiProperty()
@@ -14,8 +14,14 @@ export class CreateBlogDto{
     @IsNumber()
     estimatedMinutes : number;
 
-    @ApiProperty({required : false})
+    @ApiProperty({
+        description: "Array of tag ids, which you want to be added.",
+        type: 'array',
+        items: {
+            type: 'number'
+        }
+    })
     @IsArray()
-    @IsOptional()
-    tags : string[];
+    @IsNumber({},{each: true})
+    tagIds : number[];
 }

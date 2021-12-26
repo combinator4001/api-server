@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 import * as dotenv from 'dotenv';
 import { Blog } from '.prisma/client';
-import { User } from '@prisma/client';
 import { UpdateBlogReqDto } from './dtos/update-blog-req.dto';
 import { blogStorageUrl } from 'src/variables';
 dotenv.config();
@@ -85,8 +84,10 @@ export class BlogService {
         authorId : number, 
         estimatedMinutes : number, 
         title : string,
-        contentUrl : string){
-
+        contentUrl : string,
+        tagIds: number[]
+    ){
+        const relations = tagIds.map((id: number) => {return {tag_id: id}});
         await this.prisma.blog.create({
             data : {
                 estimatedMinutes,
@@ -95,6 +96,11 @@ export class BlogService {
                 author : {
                     connect : {
                         id : authorId
+                    }
+                },
+                tags: {
+                    createMany: {
+                        data: relations
                     }
                 }
             }
