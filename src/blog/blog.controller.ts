@@ -227,4 +227,60 @@ export class BlogController {
         })
         return result;
     }
+
+    @Get('/v2/:username/blogs')
+    @ApiOperation({
+      summary : 'Returns written blogs of the given user.'
+    })
+    @ApiOkResponse({
+      description: 'Fetched blogs successfully!',
+      type: GetBlogResDto,
+      isArray: true
+    })
+    @ApiBadRequestResponse({description: 'Invalid page or limit.'})
+    @ApiNotFoundResponse({description: 'There is no user with that username.'})
+    async getBlogs(
+        @Param('username') username: string,
+        @Query('page', ParseIntPipe) page: number,
+        @Query('limit', ParseIntPipe) limit: number
+    ){
+        //validation page and limit
+        if(page <= 0 || limit <= 0){
+            throw new BadRequestException('page and limit must be positive!');
+        }
+        const user = await this.prisma.user.findUnique({
+            where: {
+                username
+            }
+        });
+        if(!user){
+            throw new NotFoundException();
+        }
+
+        const queryResults = await this.blogService.userBlogs(
+            user.id,
+            page,
+            limit
+        );
+
+        const result = queryResults.map(item => {
+            const tags = item.tags.map(item => {
+                return {
+                    id: item.tag.id,
+                    name: item.tag.name
+                };
+            });
+            return new GetBlogResDto(
+                item.id,
+                item.title,
+                item.author.username,
+                item.estimatedMinutes,
+                item.createdAt,
+                item.lastModify,
+                item.contentUrl,
+                tags
+            )
+        })
+        return result;
+    }
 }
