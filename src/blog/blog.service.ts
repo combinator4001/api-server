@@ -262,7 +262,20 @@ export class BlogService {
             },
             distinct: ['blog_id'],
             include: {
-                blog: true
+                blog: {
+                    include: {
+                        author: {
+                            select: {
+                                username: true
+                            }
+                        },
+                        tags: {
+                            select: {
+                                tag: true
+                            }
+                        }
+                    }
+                }
             },
             skip: skip,
             take: take

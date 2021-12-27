@@ -159,6 +159,27 @@ export class BlogController {
             }
         }
 
-        return await this.blogService.findManyByTags(page, limit, tagIds);
+        const queryResults = await this.blogService.findManyByTags(page, limit, tagIds);
+        const result = queryResults.map(item => {
+            const tags = item.blog.tags.map(item => {
+                return {
+                    id: item.tag.id,
+                    name: item.tag.name
+                };
+            });
+
+            return new GetBlogResDto(
+                item.blog_id,
+                item.blog.title,
+                item.blog.author.username,
+                item.blog.estimatedMinutes,
+                item.blog.createdAt,
+                item.blog.lastModify,
+                item.blog.contentUrl,
+                tags
+            )
+        });
+        
+        return result;
     }
 }
