@@ -24,7 +24,7 @@ export class PersonController {
     type : CreatePersonBadRequestResDto
   })
   @ApiUnauthorizedResponse({
-    description : 'Username already exists.',
+    description : 'Username already exists. | Email already exists.',
     type : CreatePersonUnauthorizedResDto
   })
   @ApiInternalServerErrorResponse({

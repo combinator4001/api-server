@@ -23,25 +23,44 @@ export class PersonService {
     const {username, password, firstName, lastName, email} = createPersonReqDto;
     
     //Check username exists or not
-    let resultUser = await this.prisma.user.findUnique({
+    let results = await this.prisma.user.findMany({
       where : {
-        username
+        OR: [
+          {
+            username: username
+          },
+          {
+            email: email
+          }
+        ]
       }
     });
-    if(resultUser){
-      //401
-      //username exists
-      throw new HttpException({
-        statusCode : HttpStatus.UNAUTHORIZED,
-        message : 'Username already exists.'
-      }, HttpStatus.UNAUTHORIZED);
-    }    
+    for(const user of results) {
+
+      if(user.username === username){
+        //401
+        //username exists
+        throw new HttpException({
+          statusCode : HttpStatus.UNAUTHORIZED,
+          message : 'Username already exists.'
+        }, HttpStatus.UNAUTHORIZED);
+      }
+      else if(user.email === email){
+        //401
+        //username exists
+        throw new HttpException({
+          statusCode : HttpStatus.UNAUTHORIZED,
+          message : 'Email already exists.'
+        }, HttpStatus.UNAUTHORIZED);
+      }
+
+    }
 
     //New username
     const saltOrRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltOrRounds);
 
-    resultUser = await this.prisma.user.create({
+    const resultUser = await this.prisma.user.create({
       data:{
         username : username,
         password : hashedPassword,
