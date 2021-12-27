@@ -239,4 +239,46 @@ export class BlogService {
         run();
 
     }
+
+    /**
+     * 
+     * @param page 
+     * @param limit 
+     * @param orCondition 
+     * @returns 
+     */
+    async findManyByTags(
+        page: number,
+        limit: number,
+        orCondition: {
+            tag_id: number
+        }[]
+    ){
+        const skip = (page - 1) * limit;
+        const take = limit;
+        return await this.prisma.tagsOnBlogs.findMany({
+            where: {
+                OR: orCondition
+            },
+            distinct: ['blog_id'],
+            include: {
+                blog: {
+                    include: {
+                        author: {
+                            select: {
+                                username: true
+                            }
+                        },
+                        tags: {
+                            select: {
+                                tag: true
+                            }
+                        }
+                    }
+                }
+            },
+            skip: skip,
+            take: take
+        });
+    }
 }

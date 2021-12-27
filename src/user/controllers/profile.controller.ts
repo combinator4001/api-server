@@ -19,7 +19,7 @@ export class ProfileController{
     constructor(private profileService : ProfileService){}
 
     @Get('/:username/profile')
-    @ApiOperation({summary : 'Returns public profile inofs.'})
+    @ApiOperation({summary : 'Returns public profile infos.'})
     @ApiExtraModels(GetPublicCompanyProfile, GetPublicPersonProfile)
     @ApiOkResponse({
       description: 'Profile returned!',
