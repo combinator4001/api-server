@@ -302,4 +302,32 @@ export class BlogService {
             }
         });
     }
+
+    async userBlogs(
+        id: number,
+        page: number,
+        limit: number
+    ) {
+        const skip = (page - 1) * limit;
+        const take = limit;
+        return await this.prisma.blog.findMany({
+            where: {
+                author_id: id
+            },
+            skip: skip,
+            take: take,
+            include: {
+                author: {
+                    select: {
+                        username: true
+                    }
+                },
+                tags: {
+                    select: {
+                        tag: true
+                    }
+                }
+            }
+        });
+    }
 }
