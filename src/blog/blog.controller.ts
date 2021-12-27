@@ -130,6 +130,11 @@ export class BlogController {
     }
 
     @Get('blogs/search')
+    @ApiOkResponse({
+        description: "Fetched successfully!",
+        type: GetBlogResDto,
+        isArray: true
+    })
     @ApiBadRequestResponse({description: "Page and limit must be positive"})
     async searchByTag(
         @Query('page', ParseIntPipe) page: number,
@@ -179,7 +184,7 @@ export class BlogController {
                 tags
             )
         });
-        
+
         return result;
     }
 }
