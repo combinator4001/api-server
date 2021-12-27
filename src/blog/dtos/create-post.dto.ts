@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsInt, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsInt, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 import * as vars from './../../variables';
 
 export class CreateBlogDto{
@@ -44,9 +44,11 @@ export class CreateBlogDto{
         type: 'array',
         items: {
             type: 'number'
-        }
+        },
+        maxLength: vars.tagIdsArrayMaxSize
     })
     @IsArray()
+    @ArrayMaxSize(vars.tagIdsArrayMaxSize)
     @IsInt({each: true})
     tagIds : number[]
 }

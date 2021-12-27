@@ -33,3 +33,5 @@ export const blogContentMaxLength = 5000;
 
 export const estimatedMinutesMin = 1;
 export const estimatedMinutesMax = 24 * 60;
+
+export const tagIdsArrayMaxSize = 10;
