@@ -27,7 +27,7 @@ export class BlogController {
     @ApiUnauthorizedResponse({description : 'Unauthorized!'})
     async createBlog(@Body() body : CreateBlogDto, @Request() req){
         for(const tagId of body.tagIds){
-            const result = await this.prisma.tag.findFirst({
+            const result = await this.prisma.tag.findUnique({
                 where: {
                     id: tagId
                 }
@@ -102,7 +102,7 @@ export class BlogController {
         }
         if(body.tagIds){
             for(const tagId of body.tagIds){
-                const result = await this.prisma.tag.findFirst({
+                const result = await this.prisma.tag.findUnique({
                     where: {
                         id: tagId
                     }
@@ -136,12 +136,15 @@ export class BlogController {
         @Query('limit', ParseIntPipe) limit: number,
         @Body() body: SearchByTag
     ){
-        //validation
+        //validation page and limit
         if(page <= 0 || limit <= 0){
             throw new BadRequestException('page and limit must be positive!');
         }
+
+        //validation tags + making the query array
+        const tagIds = [];
         for(const tagId of body.tagIds){
-            const result = await this.prisma.tag.findFirst({
+            const result = await this.prisma.tag.findUnique({
                 where: {
                     id: tagId
                 }
@@ -149,8 +152,13 @@ export class BlogController {
             if(!result){
                 throw new BadRequestException(`There is no tag associated with ${tagId}`);
             }
+            else{
+                tagIds.push({
+                    tag_id: result.id
+                });
+            }
         }
 
-        
+        return await this.blogService.findManyByTags(page, limit, tagIds);
     }
 }

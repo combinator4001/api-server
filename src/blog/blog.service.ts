@@ -240,9 +240,32 @@ export class BlogService {
 
     }
 
-    async findMany(page: number, limit: number){
+    /**
+     * 
+     * @param page 
+     * @param limit 
+     * @param orCondition 
+     * @returns 
+     */
+    async findManyByTags(
+        page: number,
+        limit: number,
+        orCondition: {
+            tag_id: number
+        }[]
+    ){
         const skip = (page - 1) * limit;
         const take = limit;
-        return await this.prisma.blog.findMany();
+        return await this.prisma.tagsOnBlogs.findMany({
+            where: {
+                OR: orCondition
+            },
+            distinct: ['blog_id'],
+            include: {
+                blog: true
+            },
+            skip: skip,
+            take: take
+        });
     }
 }
