@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Post, UseGuards, Request, Param, NotFoundException, ParseIntPipe, Patch, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, UseGuards, Request, Param, NotFoundException, ParseIntPipe, Patch, UnauthorizedException, BadRequestException, Query } from '@nestjs/common';
 import { ApiCreatedResponse, ApiUnauthorizedResponse, ApiBadRequestResponse, ApiHeader, ApiTags, ApiOkResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { basename } from 'path';
 import { PrismaService } from 'src/app/prisma.service';
@@ -7,17 +7,18 @@ import { blogStorageUrl } from 'src/variables';
 import { BlogService } from './blog.service';
 import { CreateBlogDto } from './dtos/create-post.dto';
 import { GetBlogResDto } from './dtos/get-blog-res.dto';
+import { SearchByTag } from './dtos/search-by-tag.dto';
 import { UpdateBlogReqDto } from './dtos/update-blog-req.dto';
 
 @ApiTags('Blog')
-@Controller('blog')
+@Controller()
 export class BlogController {
     constructor(
         private blogService: BlogService,
         private prisma: PrismaService
     ){}
 
-    @Post()
+    @Post('blog')
     @UseGuards(JwtAuthGuard)
     @ApiOperation({summary : 'Creates a new blog post.'})
     @ApiHeader({name : 'Authorization'})
@@ -53,7 +54,7 @@ export class BlogController {
         }
     }
 
-    @Get(':id')
+    @Get('blog/:id')
     @ApiOperation({summary : 'Returns a blog info based on the given id.'})
     @ApiOkResponse({
         description : 'Found it!',
@@ -84,7 +85,7 @@ export class BlogController {
         );
     }
 
-    @Patch(':id')
+    @Patch('blog/:id')
     @UseGuards(JwtAuthGuard)
     @ApiHeader({name : 'Authorization'})
     @ApiOperation({
@@ -114,7 +115,7 @@ export class BlogController {
         await this.blogService.updateBlog(id, body);
     }
 
-    @Delete(':id')
+    @Delete('blog/:id')
     @UseGuards(JwtAuthGuard)
     @ApiHeader({name : 'Authorization'})
     @ApiOperation({summary: 'Deletes a blog post.'})
@@ -126,5 +127,30 @@ export class BlogController {
             throw new UnauthorizedException();
         }
         await this.blogService.deleteBlog(id);
+    }
+
+    @Get('blogs/search')
+    @ApiBadRequestResponse({description: "Page and limit must be positive"})
+    async searchByTag(
+        @Query('page', ParseIntPipe) page: number,
+        @Query('limit', ParseIntPipe) limit: number,
+        @Body() body: SearchByTag
+    ){
+        //validation
+        if(page <= 0 || limit <= 0){
+            throw new BadRequestException('page and limit must be positive!');
+        }
+        for(const tagId of body.tagIds){
+            const result = await this.prisma.tag.findFirst({
+                where: {
+                    id: tagId
+                }
+            });
+            if(!result){
+                throw new BadRequestException(`There is no tag associated with ${tagId}`);
+            }
+        }
+
+        
     }
 }

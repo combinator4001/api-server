@@ -45,7 +45,7 @@ export class CreateBlogDto{
         items: {
             type: 'number'
         },
-        maxLength: vars.tagIdsArrayMaxSize
+        maxItems: vars.tagIdsArrayMaxSize
     })
     @IsArray()
     @ArrayMaxSize(vars.tagIdsArrayMaxSize)
