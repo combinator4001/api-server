@@ -190,7 +190,10 @@ export class ProfileController{
   }
 
   @Get('/:username/blogs')
-  @ApiOperation({summary : 'Returns written blogs of the given user.'})
+  @ApiOperation({
+    summary : 'Returns written blogs of the given user.',
+    deprecated: true
+  })
   @ApiOkResponse({
     description: 'Fetched blogs successfully!',
     type: GetBlogsDto,
