@@ -13,7 +13,7 @@ import { GetPrivateCompanyProfile, GetPrivatePersonProfile } from './../dtos/get
 import { GetPublicCompanyProfile, GetPublicPersonProfile } from './../dtos/get-public-profile-res.dto';
 import { GetBlogsDto } from "../dtos/get-blogs.dto";
 
-@ApiTags('User / Profile')
+@ApiTags('Profile')
 @Controller()
 export class ProfileController{
     constructor(private profileService : ProfileService){}
@@ -190,7 +190,10 @@ export class ProfileController{
   }
 
   @Get('/:username/blogs')
-  @ApiOperation({summary : 'Returns written blogs of the given user.'})
+  @ApiOperation({
+    summary : 'Returns written blogs of the given user.',
+    deprecated: true
+  })
   @ApiOkResponse({
     description: 'Fetched blogs successfully!',
     type: GetBlogsDto,

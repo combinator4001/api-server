@@ -15,7 +15,7 @@ import { EmailService } from 'src/app/email.service';
 import { apiServerUrl, frontServerUrl } from 'src/variables';
 import { EmailVerifyJwtAuthGuard } from 'src/auth/verify-email/verify-email-jwt-auth.guard';
 
-@ApiTags('User / Auth')
+@ApiTags('Auth')
 @Controller('')
 export class UserController {
     constructor(

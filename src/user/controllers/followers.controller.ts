@@ -5,7 +5,7 @@ import { GetFollowersResDto } from "../dtos/follow-dtos/get-followers-res.dto";
 import { FollowersService } from "../services/followers.service";
 
 @Controller('')
-@ApiTags('User / Followers')
+@ApiTags('Followers')
 export class FollowersController{
     constructor(private followersService : FollowersService){}
 
