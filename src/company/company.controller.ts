@@ -24,7 +24,7 @@ export class CompanyController {
     type : CreateCompanyBadRequestResDto
   })
   @ApiUnauthorizedResponse({
-    description : 'Username already exists',
+    description : 'Username already exists. | Email already exists.',
     type:CreateCompanyUnauthorizedResDto
   })
   @ApiInternalServerErrorResponse({
