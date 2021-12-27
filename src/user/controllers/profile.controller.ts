@@ -13,7 +13,7 @@ import { GetPrivateCompanyProfile, GetPrivatePersonProfile } from './../dtos/get
 import { GetPublicCompanyProfile, GetPublicPersonProfile } from './../dtos/get-public-profile-res.dto';
 import { GetBlogsDto } from "../dtos/get-blogs.dto";
 
-@ApiTags('User / Profile')
+@ApiTags('Profile')
 @Controller()
 export class ProfileController{
     constructor(private profileService : ProfileService){}

@@ -7,7 +7,7 @@ import { GetFollowingResDto } from "./../dtos/follow-dtos/get-following-res.dto"
 import { FollowingService } from "./../services/following.service";
 
 @Controller('')
-@ApiTags('User / Following')
+@ApiTags('Following')
 export class FollowingController{
     constructor(private followingService : FollowingService){}
 
