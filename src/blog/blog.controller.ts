@@ -130,6 +130,7 @@ export class BlogController {
     }
 
     @Get('blogs/search')
+    @ApiOperation({summary: "Filters blogs by tags."})
     @ApiOkResponse({
         description: "Fetched successfully!",
         type: GetBlogResDto,
@@ -185,6 +186,39 @@ export class BlogController {
             )
         });
 
+        return result;
+    }
+
+    @Get('blogs/')
+    @ApiOperation({summary: "Returns page of blogs for homepage."})
+    async getAllBlogs(
+        @Query('page', ParseIntPipe) page: number,
+        @Query('limit', ParseIntPipe) limit: number
+    ){
+        //validation page and limit
+        if(page <= 0 || limit <= 0){
+            throw new BadRequestException('page and limit must be positive!');
+        }
+
+        const queryResults = await this.blogService.findMany(page, limit);
+        const result = queryResults.map(item => {
+            const tags = item.tags.map(item => {
+                return {
+                    id: item.tag.id,
+                    name: item.tag.name
+                };
+            });
+            return new GetBlogResDto(
+                item.id,
+                item.title,
+                item.author.username,
+                item.estimatedMinutes,
+                item.createdAt,
+                item.lastModify,
+                item.contentUrl,
+                tags
+            )
+        })
         return result;
     }
 }
