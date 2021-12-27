@@ -191,6 +191,12 @@ export class BlogController {
 
     @Get('blogs/')
     @ApiOperation({summary: "Returns page of blogs for homepage."})
+    @ApiOkResponse({
+        description: "Fetched successfully!",
+        type: GetBlogResDto,
+        isArray: true
+    })
+    @ApiBadRequestResponse({description: 'Invalid page or limit.'})
     async getAllBlogs(
         @Query('page', ParseIntPipe) page: number,
         @Query('limit', ParseIntPipe) limit: number
