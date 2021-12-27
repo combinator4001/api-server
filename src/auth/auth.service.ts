@@ -78,4 +78,14 @@ export class AuthService {
         }
         return false;
     }
+
+    async createVerifyEmailToken(id: number, username: string, role: Role, emailIsVerified: boolean){
+        const payload = {
+            id,
+            username,
+            role,
+            emailIsVerified
+        }
+        return await this.jwtService.sign(payload, {expiresIn : '15m'})
+    }
 }

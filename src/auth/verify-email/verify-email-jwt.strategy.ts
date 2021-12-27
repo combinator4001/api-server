@@ -9,11 +9,11 @@ type Payload = {
   id : number,
   username : string,
   role : Role,
-  hashedPassLastTenChars : string
+  emailIsVerified : boolean
 } 
 
 @Injectable()
-export class ForgetPassJwtStrategy extends PassportStrategy(Strategy, 'forgetPassJwt') {
+export class EmailVerifyJwtStrategy extends PassportStrategy(Strategy, 'emailVerifyJwt') {
   constructor(private authService : AuthService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -29,15 +29,11 @@ export class ForgetPassJwtStrategy extends PassportStrategy(Strategy, 'forgetPas
    * @returns 
    */
   async validate(payload: Payload) {
-    const tokenIsUsed = await this.authService.forgetTokenIsUsed(payload.id, payload.hashedPassLastTenChars);
-    if(tokenIsUsed){
-      throw new HttpException('Unauthorized!', HttpStatus.UNAUTHORIZED);
-    }
-    return { 
-      id: payload.id, 
+    return {
+      id: payload.id,
       username: payload.username,
-      role : payload.role,
-      hashedPassLastTenChars : payload.hashedPassLastTenChars
+      role: payload.role,
+      emailIsVerified: payload.emailIsVerified
     };
   }
 }

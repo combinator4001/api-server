@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 import * as dotenv from 'dotenv';
 import { Blog } from '.prisma/client';
-import { User } from '@prisma/client';
 import { UpdateBlogReqDto } from './dtos/update-blog-req.dto';
 import { blogStorageUrl } from 'src/variables';
 dotenv.config();
@@ -85,8 +84,10 @@ export class BlogService {
         authorId : number, 
         estimatedMinutes : number, 
         title : string,
-        contentUrl : string){
-
+        contentUrl : string,
+        tagIds: number[]
+    ){
+        const relations = tagIds.map((id: number) => {return {tag_id: id}});
         await this.prisma.blog.create({
             data : {
                 estimatedMinutes,
@@ -96,26 +97,36 @@ export class BlogService {
                     connect : {
                         id : authorId
                     }
+                },
+                tags: {
+                    createMany: {
+                        data: relations
+                    }
                 }
             }
-        })
+        });
     }
 
     async getBlog(blogId: number){
-        const blog:  Blog & {
-            author: {
-                id: number
-                username: string
-            }
-        } = await this.prisma.blog.findUnique({
-            where : {
-                id : blogId
+        const blog = await this.prisma.blog.findUnique({
+            where: {
+                id: blogId
             },
-            include : {
-                author : {
-                    select : {
-                        id : true,
-                        username : true
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        username: true
+                    }
+                },
+                tags: {
+                    select: {
+                        tag_id: true,
+                        tag: {
+                            select: {
+                                name: true
+                            }
+                        }
                     }
                 }
             }
@@ -137,22 +148,51 @@ export class BlogService {
             }
         });
 
-        const fullBlogPath = this.createLocalHtml(updateBlogReqDto.content);
-        this.sendToStorage(fullBlogPath);
-        const contentUrl = blogStorageUrl + '/' + basename(fullBlogPath);
+        if(updateBlogReqDto.content){
+            const fullBlogPath = this.createLocalHtml(updateBlogReqDto.content);
+            this.sendToStorage(fullBlogPath);
+            const contentUrl = blogStorageUrl + '/' + basename(fullBlogPath);
+            await this.deleteFromStorage(blogId);
+            await this.prisma.blog.update({
+                where: {
+                    id: blogId
+                },
+                data: {
+                    lastModify: new Date(),
+                    estimatedMinutes: updateBlogReqDto.estimatedMinutes ?? oldBlog.estimatedMinutes,
+                    title: updateBlogReqDto.title ?? oldBlog.title,
+                    contentUrl: contentUrl
+                }
+            });
+        }else{
+            await this.prisma.blog.update({
+                where: {
+                    id: blogId
+                },
+                data: {
+                    lastModify: new Date(),
+                    estimatedMinutes: updateBlogReqDto.estimatedMinutes ?? oldBlog.estimatedMinutes,
+                    title: updateBlogReqDto.title ?? oldBlog.title
+                }
+            });
+        }
 
-        await this.deleteFromStorage(blogId);
-        await this.prisma.blog.update({
-            where: {
-                id: blogId
-            },
-            data: {
-                lastModify: new Date(),
-                estimatedMinutes: updateBlogReqDto.estimatedMinutes ?? oldBlog.estimatedMinutes,
-                title: updateBlogReqDto.title ?? oldBlog.title,
-                contentUrl: contentUrl
-            }
-        });
+        if(updateBlogReqDto.tagIds){
+            await this.prisma.tagsOnBlogs.deleteMany({
+                where: {
+                    blog_id: blogId
+                }
+            });
+            const relations = updateBlogReqDto.tagIds.map((id: number) => {
+                return {
+                    blog_id: blogId,
+                    tag_id: id
+                };
+            });
+            await this.prisma.tagsOnBlogs.createMany({
+                data: relations
+            });
+        }
     }
 
     async deleteBlog(blogId: number){
@@ -198,5 +238,47 @@ export class BlogService {
 
         run();
 
+    }
+
+    /**
+     * 
+     * @param page 
+     * @param limit 
+     * @param orCondition 
+     * @returns 
+     */
+    async findManyByTags(
+        page: number,
+        limit: number,
+        orCondition: {
+            tag_id: number
+        }[]
+    ){
+        const skip = (page - 1) * limit;
+        const take = limit;
+        return await this.prisma.tagsOnBlogs.findMany({
+            where: {
+                OR: orCondition
+            },
+            distinct: ['blog_id'],
+            include: {
+                blog: {
+                    include: {
+                        author: {
+                            select: {
+                                username: true
+                            }
+                        },
+                        tags: {
+                            select: {
+                                tag: true
+                            }
+                        }
+                    }
+                }
+            },
+            skip: skip,
+            take: take
+        });
     }
 }

@@ -19,7 +19,7 @@ export class ProfileController{
     constructor(private profileService : ProfileService){}
 
     @Get('/:username/profile')
-    @ApiOperation({summary : 'Returns public profile inofs.'})
+    @ApiOperation({summary : 'Returns public profile infos.'})
     @ApiExtraModels(GetPublicCompanyProfile, GetPublicPersonProfile)
     @ApiOkResponse({
       description: 'Profile returned!',
@@ -62,7 +62,7 @@ export class ProfileController{
 
     @UseGuards(JwtAuthGuard)
     @Get('/me')
-    @ApiOperation({summary : 'Returns private profile inofs.'})
+    @ApiOperation({summary : 'Returns private profile infos.'})
     @ApiHeader({name : 'Authorization'})
     @ApiExtraModels(GetPrivatePersonProfile, GetPrivateCompanyProfile)
     @ApiOkResponse({

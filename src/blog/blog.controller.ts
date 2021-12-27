@@ -1,19 +1,24 @@
-import { Body, Controller, Delete, Get, Post, UseGuards, Request, Param, NotFoundException, ParseIntPipe, Patch, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, UseGuards, Request, Param, NotFoundException, ParseIntPipe, Patch, UnauthorizedException, BadRequestException, Query } from '@nestjs/common';
 import { ApiCreatedResponse, ApiUnauthorizedResponse, ApiBadRequestResponse, ApiHeader, ApiTags, ApiOkResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { basename } from 'path';
+import { PrismaService } from 'src/app/prisma.service';
 import { JwtAuthGuard } from 'src/auth/general/jwt-auth.guard';
 import { blogStorageUrl } from 'src/variables';
 import { BlogService } from './blog.service';
 import { CreateBlogDto } from './dtos/create-post.dto';
 import { GetBlogResDto } from './dtos/get-blog-res.dto';
+import { SearchByTag } from './dtos/search-by-tag.dto';
 import { UpdateBlogReqDto } from './dtos/update-blog-req.dto';
 
 @ApiTags('Blog')
-@Controller('blog')
+@Controller()
 export class BlogController {
-    constructor(private blogService : BlogService){}
+    constructor(
+        private blogService: BlogService,
+        private prisma: PrismaService
+    ){}
 
-    @Post()
+    @Post('blog')
     @UseGuards(JwtAuthGuard)
     @ApiOperation({summary : 'Creates a new blog post.'})
     @ApiHeader({name : 'Authorization'})
@@ -21,6 +26,16 @@ export class BlogController {
     @ApiBadRequestResponse({description : 'Invalid fields!'})
     @ApiUnauthorizedResponse({description : 'Unauthorized!'})
     async createBlog(@Body() body : CreateBlogDto, @Request() req){
+        for(const tagId of body.tagIds){
+            const result = await this.prisma.tag.findUnique({
+                where: {
+                    id: tagId
+                }
+            });
+            if(!result){
+                throw new BadRequestException(`There is no tag associated with ${tagId}`);
+            }
+        }
 
         const fullBlogPath = this.blogService.createLocalHtml(body.content);
         this.blogService.sendToStorage(fullBlogPath);
@@ -29,7 +44,8 @@ export class BlogController {
             req.user.id,
             body.estimatedMinutes,
             body.title,
-            contentUrl
+            contentUrl,
+            body.tagIds
         );
 
         return {
@@ -38,7 +54,7 @@ export class BlogController {
         }
     }
 
-    @Get(':id')
+    @Get('blog/:id')
     @ApiOperation({summary : 'Returns a blog info based on the given id.'})
     @ApiOkResponse({
         description : 'Found it!',
@@ -51,6 +67,12 @@ export class BlogController {
         if(!blog){
             throw new NotFoundException();
         }
+        const tags = blog.tags.map(item => {
+            return {
+                id: item.tag_id,
+                name: item.tag.name
+            }
+        });
         return new GetBlogResDto(
             blog.id,
             blog.title,
@@ -59,25 +81,41 @@ export class BlogController {
             blog.createdAt,
             blog.lastModify,
             blog.contentUrl,
-            []
-        )
+            tags
+        );
     }
 
-    @Patch(':id')
+    @Patch('blog/:id')
     @UseGuards(JwtAuthGuard)
     @ApiHeader({name : 'Authorization'})
-    @ApiOperation({summary: 'Updates a blog post.'})
+    @ApiOperation({
+        summary: 'Updates a blog post.',
+        description: 'If you dont want update tags, then simply send a json without tagIds key.'
+    })
     @ApiOkResponse({description: 'Updated!'})
     @ApiBadRequestResponse({description: 'Invalid fields!'})
     @ApiUnauthorizedResponse({description: 'Unauthorized!'})
     async updateBlog(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateBlogReqDto, @Request() req){
+        //check if the user is owner of that post
         if(!await this.blogService.userIsAuthorized(req.user.id, id)){
             throw new UnauthorizedException();
+        }
+        if(body.tagIds){
+            for(const tagId of body.tagIds){
+                const result = await this.prisma.tag.findUnique({
+                    where: {
+                        id: tagId
+                    }
+                });
+                if(!result){
+                    throw new BadRequestException(`There is no tag associated with ${tagId}`);
+                }
+            }
         }
         await this.blogService.updateBlog(id, body);
     }
 
-    @Delete(':id')
+    @Delete('blog/:id')
     @UseGuards(JwtAuthGuard)
     @ApiHeader({name : 'Authorization'})
     @ApiOperation({summary: 'Deletes a blog post.'})
@@ -89,5 +127,64 @@ export class BlogController {
             throw new UnauthorizedException();
         }
         await this.blogService.deleteBlog(id);
+    }
+
+    @Get('blogs/search')
+    @ApiOkResponse({
+        description: "Fetched successfully!",
+        type: GetBlogResDto,
+        isArray: true
+    })
+    @ApiBadRequestResponse({description: "Page and limit must be positive"})
+    async searchByTag(
+        @Query('page', ParseIntPipe) page: number,
+        @Query('limit', ParseIntPipe) limit: number,
+        @Body() body: SearchByTag
+    ){
+        //validation page and limit
+        if(page <= 0 || limit <= 0){
+            throw new BadRequestException('page and limit must be positive!');
+        }
+
+        //validation tags + making the query array
+        const tagIds = [];
+        for(const tagId of body.tagIds){
+            const result = await this.prisma.tag.findUnique({
+                where: {
+                    id: tagId
+                }
+            });
+            if(!result){
+                throw new BadRequestException(`There is no tag associated with ${tagId}`);
+            }
+            else{
+                tagIds.push({
+                    tag_id: result.id
+                });
+            }
+        }
+
+        const queryResults = await this.blogService.findManyByTags(page, limit, tagIds);
+        const result = queryResults.map(item => {
+            const tags = item.blog.tags.map(item => {
+                return {
+                    id: item.tag.id,
+                    name: item.tag.name
+                };
+            });
+
+            return new GetBlogResDto(
+                item.blog_id,
+                item.blog.title,
+                item.blog.author.username,
+                item.blog.estimatedMinutes,
+                item.blog.createdAt,
+                item.blog.lastModify,
+                item.blog.contentUrl,
+                tags
+            )
+        });
+
+        return result;
     }
 }
