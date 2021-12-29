@@ -49,7 +49,8 @@ model Person {
   firstName String
   lastName  String
 
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  Investments Invest[]
 }
 
 model Company {
@@ -57,7 +58,8 @@ model Company {
   name    String
   owners  String[]
 
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  Investors Invest[]
 }
 
 model Blog {
@@ -87,4 +89,24 @@ model TagsOnBlogs {
   tag     Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade)
 
   @@id([blog_id, tag_id])
+}
+
+enum InvestState {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+//join table
+model Invest {
+  id          Int         @unique @default(autoincrement())
+  company_id  Int
+  investor_id Int
+  state       InvestState
+  message     String      @db.VarChar(255)
+  money       Float
+  company     Company     @relation(fields: [company_id], references: [user_id], onDelete: Cascade)
+  person      Person      @relation(fields: [investor_id], references: [user_id], onDelete: Cascade)
+
+  @@id([investor_id, company_id])
 }
