@@ -9,10 +9,10 @@ export class CreateInvestDto {
     })
     @IsString()
     @MinLength(vars.usernameMinLentgh, {
-        message : `username must be at least ${vars.usernameMinLentgh} characters.`,
+        message : `companyUsername must be at least ${vars.usernameMinLentgh} characters.`,
       })
     @MaxLength(vars.usernameMaxLentgh, {
-        message : `username must be at most ${vars.usernameMaxLentgh} characters.`
+        message : `companyUsername must be at most ${vars.usernameMaxLentgh} characters.`
     })
     companyUsername: string
 
@@ -22,10 +22,10 @@ export class CreateInvestDto {
     })
     @IsString()
     @MinLength(vars.titleMinLength, {
-        message : `Title must be at least ${vars.titleMinLength} characters.`,
+        message : `blogTitle must be at least ${vars.titleMinLength} characters.`,
     })
     @MaxLength(vars.titleMaxLength, {
-        message : `Title must be at most ${vars.titleMaxLength} characters.`
+        message : `blogTitle must be at most ${vars.titleMaxLength} characters.`
     })
     blogTitle : string
 

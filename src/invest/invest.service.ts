@@ -22,17 +22,20 @@ export class InvestService {
     const subject = `${personUsername} wants to invest in your company!`
     const message = 
     `
-      <h6>Hi there!</h6>
-      I have read your blog post about ${blogTitle} and I would like to invest ${money} in your company.
+      <h2>Hi there!</h2>
+      I have read your blog post about "${blogTitle}" and I would like to invest ${money}$ in your company.
     `;
+
     await this.prisma.invest.create({
       data: {
         investor_id: personId,
         company_id: companyId,
         state: InvestState.PENDING,
-        message: message
+        message: message,
+        money: money
       }
     });
+
     this.emailService.sendOneMail(companyEmail, subject, message);
   }
 

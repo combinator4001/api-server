@@ -103,6 +103,7 @@ model Invest {
   investor_id Int
   state       InvestState
   message     String      @db.VarChar(255)
+  money       Float
   company     Company     @relation(fields: [company_id], references: [user_id], onDelete: Cascade)
   person      Person      @relation(fields: [investor_id], references: [user_id], onDelete: Cascade)
 

@@ -23,8 +23,8 @@ export class InvestController {
     description: "Person invests in a company."
   })
   @ApiCreatedResponse({description: 'Invested successfully!'})
-  @ApiBadRequestResponse({description: "Company not found! | Username is not for a company!"})
-  @ApiUnauthorizedResponse({description: "Only person users can invest!"})
+  @ApiBadRequestResponse({description: "Company not found! | Username is not for a company! | Already invested!"})
+  @ApiUnauthorizedResponse({description: "Unauthorized! | Only person users can invest!"})
   async create(@Body() createInvestDto: CreateInvestDto, @Req() req) {
     //validation
     if(req.user.role !== Role.PERSON){
@@ -42,19 +42,26 @@ export class InvestController {
       throw new BadRequestException("Username is not for a company!");
     }
 
-    await this.investService.makeInvest(
-      req.user.id,
-      req.user.username,
-      company.id,
-      company.email,
-      createInvestDto.blogTitle,
-      createInvestDto.money
-    );
-
-    return {
-      statusCode: HttpStatus.CREATED,
-      message: 'Invested successfully!'
-    };
+    try{
+      await this.investService.makeInvest(
+        req.user.id,
+        req.user.username,
+        company.id,
+        company.email,
+        createInvestDto.blogTitle,
+        createInvestDto.money
+      );
+      
+      return {
+        statusCode: HttpStatus.CREATED,
+        message: 'Invested successfully!'
+      };
+    }catch{
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: "Already invested!"
+      }
+    }
   }
 
   @Get()
