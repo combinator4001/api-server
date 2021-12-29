@@ -99,6 +99,7 @@ enum InvestState {
 
 //join table
 model Invest {
+  id          Int         @unique @default(autoincrement())
   company_id  Int
   investor_id Int
   state       InvestState
