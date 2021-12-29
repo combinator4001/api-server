@@ -64,6 +64,7 @@ export class InvestController {
 
   @Get('invests')
   @UseGuards(JwtAuthGuard)
+  @ApiHeader({name : 'Authorization'})
   @ApiOperation({
     summary: "Invest messages",
     description: "Use for inbox or sent invest messages."
@@ -97,6 +98,7 @@ export class InvestController {
         const sender = item.person.user.username;
         const receiver = item.company.user.username;
         return new GetInvest(
+          item.id,
           `${sender} wants to invest in your company!`,
           item.message,
           item.state,
@@ -120,6 +122,7 @@ export class InvestController {
         const sender = item.person.user.username;
         const receiver = item.company.user.username;
         return new GetInvest(
+          item.id,
           `Investment in ${receiver}`,
           item.message,
           item.state,
@@ -133,9 +136,33 @@ export class InvestController {
     }
   }
 
-  @Put(':id')
-  update(@Param('id') id: string, @Body() updateInvestDto: UpdateInvestDto) {
-    return this.investService.update(+id, updateInvestDto);
+  @Put('invest/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiHeader({name : 'Authorization'})
+  @ApiOperation({summary: "Accept or reject an invest"})
+  @ApiOkResponse({description: "status updated!"})
+  @ApiBadRequestResponse({description: "There is no invest with this id!"})
+  @ApiUnauthorizedResponse({description: "Only companies can change the state of an invest!"})
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateInvestDto: UpdateInvestDto,
+    @Req() req
+  ) {
+
+    if(req.user.role !== Role.COMPANY){
+      throw new UnauthorizedException("Only companies can change the state of an invest!");
+    }
+
+    try{
+      await this.investService.update(id, updateInvestDto);
+      return {
+        statusCode: HttpStatus.OK,
+        message: "status updated!"
+      }
+    }
+    catch{
+      throw new BadRequestException("There is no invest with this id!");
+    }
   }
 
   @Delete(':id')

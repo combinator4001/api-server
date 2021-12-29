@@ -117,8 +117,15 @@ export class InvestService {
     });
   }
 
-  update(id: number, updateInvestDto: UpdateInvestDto) {
-    return `This action updates a #${id} invest`;
+  async update(id: number, updateInvestDto: UpdateInvestDto) {
+    await this.prisma.invest.update({
+      where: {
+        id: id
+      },
+      data: {
+        state: updateInvestDto.accepted ? InvestState.ACCEPTED : InvestState.REJECTED
+      }
+    });
   }
 
   remove(id: number) {

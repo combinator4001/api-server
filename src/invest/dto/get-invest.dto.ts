@@ -3,6 +3,9 @@ import { InvestState } from "@prisma/client"
 
 export class GetInvest{
     @ApiProperty()
+    investId: number
+
+    @ApiProperty()
     subject: string
 
     @ApiProperty()
@@ -21,6 +24,7 @@ export class GetInvest{
     receiverUsername: string
 
     constructor(
+        investId: number,
         subject: string,
         message: string,
         state: InvestState,
@@ -28,6 +32,7 @@ export class GetInvest{
         senderUsername: string,
         receiverUsername: string
     ){
+        this.investId = investId;
         this.subject = subject;
         this.message = message;
         this.state = state;
