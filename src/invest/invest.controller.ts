@@ -73,7 +73,7 @@ export class InvestController {
     isArray: true
   })
   @ApiBadRequestResponse({description: "Page and limit must be positive."})
-  getAllInvests(
+  async getAllInvests(
     @Query('page', ParseIntPipe) page: number,
     @Query('limit', ParseIntPipe) limit: number,
     @Req() req
@@ -87,7 +87,26 @@ export class InvestController {
       throw new BadRequestException("Use admin panel apis!");
     }
     else if(req.user.role === Role.COMPANY){
-    
+      const queryResults = await this.investService.inboxCompany(
+        page,
+        limit,
+        req.user.id
+      );
+
+      const results = queryResults.map(item => {
+        const sender = item.person.user.username;
+        const receiver = item.company.user.username;
+        return new GetInvest(
+          `${sender} wants to invest in your company!`,
+          item.message,
+          item.state,
+          item.money,
+          sender,
+          receiver
+        );
+      });
+
+      return results;
     }
     else{
       //person user

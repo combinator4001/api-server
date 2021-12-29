@@ -46,16 +46,36 @@ export class InvestService {
   ) {
     const skip = (page - 1) * limit;
     const take = limit;
-    await this.prisma.invest.findMany({
+    return await this.prisma.invest.findMany({
       where: {
         company_id: companyId
       },
       orderBy:{
         id: 'desc'
       },
+      include: {
+        company: {
+          select: {
+            user: {
+              select: {
+                username: true
+              }
+            }
+          }
+        },
+        person: {
+          select: {
+            user: {
+              select: {
+                username: true
+              }
+            }
+          }
+        }
+      },
       skip,
       take
-    })
+    });
   }
 
   async sentPerson(){
