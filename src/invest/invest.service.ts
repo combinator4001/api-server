@@ -4,7 +4,7 @@ import { UpdateInvestDto } from './dto/update-invest.dto';
 
 @Injectable()
 export class InvestService {
-  create(createInvestDto: CreateInvestDto) {
+  makeInvest(personId: number, companyId: number, message: string) {
     return 'This action adds a new invest';
   }
 
