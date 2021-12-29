@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, UnauthorizedException, BadRequestException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, UnauthorizedException, BadRequestException, HttpStatus, Put, ParseIntPipe, Query } from '@nestjs/common';
 import { InvestService } from './invest.service';
 import { CreateInvestDto } from './dto/create-invest.dto';
 import { UpdateInvestDto } from './dto/update-invest.dto';
@@ -6,16 +6,17 @@ import { ApiBadRequestResponse, ApiCreatedResponse, ApiHeader, ApiOkResponse, Ap
 import { JwtAuthGuard } from 'src/auth/general/jwt-auth.guard';
 import { Role } from '@prisma/client';
 import { PrismaService } from 'src/app/prisma.service';
+import { GetInvest } from './dto/get-invest.dto';
 
 @ApiTags('Invest')
-@Controller('invest')
+@Controller()
 export class InvestController {
   constructor(
     private readonly investService: InvestService,
     private prisma: PrismaService
   ) {}
 
-  @Post()
+  @Post('invest')
   @UseGuards(JwtAuthGuard)
   @ApiHeader({name : 'Authorization'})
   @ApiOperation({
@@ -25,7 +26,7 @@ export class InvestController {
   @ApiCreatedResponse({description: 'Invested successfully!'})
   @ApiBadRequestResponse({description: "Company not found! | Username is not for a company! | Already invested!"})
   @ApiUnauthorizedResponse({description: "Unauthorized! | Only person users can invest!"})
-  async create(@Body() createInvestDto: CreateInvestDto, @Req() req) {
+  async newInvest(@Body() createInvestDto: CreateInvestDto, @Req() req) {
     //validation
     if(req.user.role !== Role.PERSON){
       throw new UnauthorizedException("Only person users can invest!");
@@ -61,17 +62,39 @@ export class InvestController {
     }
   }
 
-  @Get()
-  findAll() {
-    return this.investService.findAll();
+  @Get('invests')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: "Invest messages",
+    description: "Use for inbox or sent invest messages."
+  })
+  @ApiOkResponse({
+    type: GetInvest,
+    isArray: true
+  })
+  @ApiBadRequestResponse({description: "Page and limit must be positive."})
+  getAllInvests(
+    @Query('page', ParseIntPipe) page: number,
+    @Query('limit', ParseIntPipe) limit: number,
+    @Req() req
+  ) {
+    //validation page and limit
+    if(page <= 0 || limit <= 0){
+      throw new BadRequestException('page and limit must be positive!');
+    }
+
+    if(req.user.role === Role.ADMIN){
+      throw new BadRequestException("Use admin panel apis!");
+    }
+    else if(req.user.role === Role.COMPANY){
+    
+    }
+    else{
+      //person user
+    }
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.investService.findOne(+id);
-  }
-
-  @Patch(':id')
+  @Put(':id')
   update(@Param('id') id: string, @Body() updateInvestDto: UpdateInvestDto) {
     return this.investService.update(+id, updateInvestDto);
   }

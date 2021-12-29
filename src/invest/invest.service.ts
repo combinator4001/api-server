@@ -39,12 +39,27 @@ export class InvestService {
     this.emailService.sendOneMail(companyEmail, subject, message);
   }
 
-  findAll() {
-    return `This action returns all invest`;
+  async inboxCompany(
+    page: number,
+    limit: number,
+    companyId: number
+  ) {
+    const skip = (page - 1) * limit;
+    const take = limit;
+    await this.prisma.invest.findMany({
+      where: {
+        company_id: companyId
+      },
+      orderBy:{
+        id: 'desc'
+      },
+      skip,
+      take
+    })
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} invest`;
+  async sentPerson(){
+
   }
 
   update(id: number, updateInvestDto: UpdateInvestDto) {
