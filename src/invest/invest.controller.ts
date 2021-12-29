@@ -110,6 +110,26 @@ export class InvestController {
     }
     else{
       //person user
+      const queryResults = await this.investService.sentPerson(
+        page,
+        limit,
+        req.user.id
+      );
+
+      const results = queryResults.map(item => {
+        const sender = item.person.user.username;
+        const receiver = item.company.user.username;
+        return new GetInvest(
+          `Investment in ${receiver}`,
+          item.message,
+          item.state,
+          item.money,
+          sender,
+          receiver
+        );
+      });
+
+      return results;
     }
   }
 

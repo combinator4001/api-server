@@ -78,8 +78,43 @@ export class InvestService {
     });
   }
 
-  async sentPerson(){
-
+  async sentPerson(
+    page: number,
+    limit: number,
+    personId: number
+  ) {
+    const skip = (page - 1) * limit;
+    const take = limit;
+    return await this.prisma.invest.findMany({
+      where: {
+        investor_id: personId
+      },
+      orderBy:{
+        id: 'desc'
+      },
+      include: {
+        company: {
+          select: {
+            user: {
+              select: {
+                username: true
+              }
+            }
+          }
+        },
+        person: {
+          select: {
+            user: {
+              select: {
+                username: true
+              }
+            }
+          }
+        }
+      },
+      skip,
+      take
+    });
   }
 
   update(id: number, updateInvestDto: UpdateInvestDto) {
