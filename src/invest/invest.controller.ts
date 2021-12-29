@@ -4,7 +4,7 @@ import { CreateInvestDto } from './dto/create-invest.dto';
 import { UpdateInvestDto } from './dto/update-invest.dto';
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiHeader, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/general/jwt-auth.guard';
-import { Role } from '@prisma/client';
+import { InvestState, Role } from '@prisma/client';
 import { PrismaService } from 'src/app/prisma.service';
 import { GetInvest } from './dto/get-invest.dto';
 
@@ -74,6 +74,7 @@ export class InvestController {
     isArray: true
   })
   @ApiBadRequestResponse({description: "Page and limit must be positive."})
+  @ApiUnauthorizedResponse()
   async getAllInvests(
     @Query('page', ParseIntPipe) page: number,
     @Query('limit', ParseIntPipe) limit: number,
@@ -165,8 +166,39 @@ export class InvestController {
     }
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.investService.remove(+id);
+  @Delete('invest/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiHeader({name : 'Authorization'})
+  @ApiOperation({summary: "Cancel a pendeing invest"})
+  @ApiOkResponse({description: "Canceled!"})
+  @ApiBadRequestResponse({description: "There is no invest with this id! | This invest is not in a pending state!"})
+  @ApiUnauthorizedResponse({description: "Only persons can cancel a pending invest!"})
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req
+  ) {
+    if(req.user.role !== Role.PERSON){
+      throw new UnauthorizedException("Only persons can cancel a pending invest!");
+    }
+
+    const invest = await this.prisma.invest.findUnique({
+      where: {
+        id: id
+      }
+    });
+
+    if(!invest){
+      throw new BadRequestException("There is no invest with this id!");
+    }
+    else if(invest.state !== InvestState.PENDING){
+      throw new BadRequestException("This invest is not in a pending state!");
+    }
+    else{
+      await this.investService.remove(id);
+      return {
+        statusCode: HttpStatus.OK,
+        message: "Canceled!"
+      }
+    }
   }
 }

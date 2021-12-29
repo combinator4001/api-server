@@ -128,7 +128,11 @@ export class InvestService {
     });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} invest`;
+  async remove(investId: number) {
+    await this.prisma.invest.delete({
+      where: {
+        id: investId
+      }
+    });
   }
 }
