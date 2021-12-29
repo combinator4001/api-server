@@ -57,10 +57,7 @@ export class InvestController {
         message: 'Invested successfully!'
       };
     }catch{
-      return {
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: "Already invested!"
-      }
+      throw new BadRequestException("Already invested!");
     }
   }
 
