@@ -1,11 +1,39 @@
 import { Injectable } from '@nestjs/common';
-import { CreateInvestDto } from './dto/create-invest.dto';
+import { PrismaService } from 'src/app/prisma.service';
 import { UpdateInvestDto } from './dto/update-invest.dto';
+import { InvestState } from '@prisma/client';
+import { EmailService } from 'src/app/email.service';
 
 @Injectable()
 export class InvestService {
-  makeInvest(personId: number, companyId: number, message: string) {
-    return 'This action adds a new invest';
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService
+  ){}
+
+  async makeInvest(
+    personId: number,
+    personUsername: string,
+    companyId: number, 
+    companyEmail: string,
+    blogTitle: string,
+    money: number
+  ) {
+    const subject = `${personUsername} wants to invest in your company!`
+    const message = 
+    `
+      <h6>Hi there!</h6>
+      I have read your blog post about ${blogTitle} and I would like to invest ${money} in your company.
+    `;
+    await this.prisma.invest.create({
+      data: {
+        investor_id: personId,
+        company_id: companyId,
+        state: InvestState.PENDING,
+        message: message
+      }
+    });
+    this.emailService.sendOneMail(companyEmail, subject, message);
   }
 
   findAll() {

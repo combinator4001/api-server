@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, UnauthorizedException, BadRequestException, HttpStatus } from '@nestjs/common';
 import { InvestService } from './invest.service';
 import { CreateInvestDto } from './dto/create-invest.dto';
 import { UpdateInvestDto } from './dto/update-invest.dto';
-import { ApiBadRequestResponse, ApiHeader, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiCreatedResponse, ApiHeader, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/general/jwt-auth.guard';
 import { Role } from '@prisma/client';
 import { PrismaService } from 'src/app/prisma.service';
@@ -20,8 +20,9 @@ export class InvestController {
   @ApiHeader({name : 'Authorization'})
   @ApiOperation({
     summary: "New invest",
-    description: "Person invests on a company."
+    description: "Person invests in a company."
   })
+  @ApiCreatedResponse({description: 'Invested successfully!'})
   @ApiBadRequestResponse({description: "Company not found! | Username is not for a company!"})
   @ApiUnauthorizedResponse({description: "Only person users can invest!"})
   async create(@Body() createInvestDto: CreateInvestDto, @Req() req) {
@@ -29,19 +30,31 @@ export class InvestController {
     if(req.user.role !== Role.PERSON){
       throw new UnauthorizedException("Only person users can invest!");
     }
-    const user = await this.prisma.user.findUnique({
+    const company = await this.prisma.user.findUnique({
       where: {
         username: createInvestDto.companyUsername
       }
     });
-    if(!user){
+    if(!company){
       throw new BadRequestException("Company not found!");
     }
-    if(user.role !== Role.COMPANY){
+    if(company.role !== Role.COMPANY){
       throw new BadRequestException("Username is not for a company!");
     }
 
-    // return this.investService.create(createInvestDto);
+    await this.investService.makeInvest(
+      req.user.id,
+      req.user.username,
+      company.id,
+      company.email,
+      createInvestDto.blogTitle,
+      createInvestDto.money
+    );
+
+    return {
+      statusCode: HttpStatus.CREATED,
+      message: 'Invested successfully!'
+    };
   }
 
   @Get()
