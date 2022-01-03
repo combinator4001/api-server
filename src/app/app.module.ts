@@ -7,15 +7,14 @@ import { CompanyModule } from '../company/company.module';
 import { UserModule } from '../user/user.module';
 import { GlobalModule } from './global.module';
 @Module({
-    imports : 
-        [
-            GlobalModule,
-            UserModule,
-            PersonModule,
-            CompanyModule,
-            BlogModule,
-            TagModule,
-            InvestModule
-        ]
+    imports : [
+        GlobalModule,
+        UserModule,
+        PersonModule,
+        CompanyModule,
+        BlogModule,
+        TagModule,
+        InvestModule
+    ]
 })
 export class AppModule {}
