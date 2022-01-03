@@ -298,4 +298,54 @@ export class ProfileController{
     const result = tags.map(item => new GetTagDto(item.Tag.id, item.Tag.name));
     return result;
   }
+
+  @Delete("user/tags")
+  @ApiOperation({
+    summary: "Unfollows a tag for the user."
+  })
+  @UseGuards(JwtAuthGuard)
+  @ApiHeader({name : 'Authorization'})
+  @ApiOkResponse({description: "Unfollowed the tag!"})
+  @ApiBadRequestResponse({
+    description: 
+      `\n
+      Tag id is not valid. \n
+      You haven’t followed this tag! \n
+      Invalid fields(message will be shown). \n`
+  })
+  @ApiUnauthorizedResponse()
+  async unfollowTag(
+    @Body() body: FollowTagReqDto,
+    @Request() req
+  ){
+    //check if tag id is valid
+    const tag = await this.prisma.tag.findUnique({
+      where: {
+        id: body.tagId
+      }
+    });
+
+    if(!tag){
+      throw new BadRequestException("Tag id is not valid!");
+    }
+    
+    try {
+      await this.prisma.followTag.deleteMany({
+        where: {
+          AND: [
+            { userId: req.user.id },
+            { tagId: body.tagId }
+          ]
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException("You haven’t followed this tag!");
+    }
+    
+    return {
+      statusCode: HttpStatus.OK,
+      message: "Unfollowed the tag!"
+    };
+  }
 }
