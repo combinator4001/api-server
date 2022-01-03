@@ -8,12 +8,13 @@ import { join } from 'path';
 import { ImageUploadDto } from './../dtos/image-upload.dto';
 import { imageStorageUrl } from 'src/variables';
 import { ImageUploadResDto } from "../dtos/image-upload-res.dto";
-import { prisma, Role, User } from "@prisma/client";
+import { Role, User } from "@prisma/client";
 import { GetPrivateCompanyProfile, GetPrivatePersonProfile } from './../dtos/get-my-profile-res.dto';
 import { GetPublicCompanyProfile, GetPublicPersonProfile } from './../dtos/get-public-profile-res.dto';
 import { GetBlogsDto } from "../dtos/get-blogs.dto";
 import { FollowTagReqDto } from "../dtos/follow-tag.dto";
 import { PrismaService } from "src/app/prisma.service";
+import { GetTagDto } from "src/tag/dto/get-tag.dto";
 
 @ApiTags('Profile')
 @Controller()
@@ -276,5 +277,25 @@ export class ProfileController{
       statusCode: HttpStatus.CREATED,
       message: "Followed tag successfully!"
     };
+  }
+
+  @Get("user/tags")
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: "Returns tags, which have been followed by the user."
+  })
+  @ApiHeader({name : 'Authorization'})
+  @ApiOkResponse({
+    description: 'Fetched tags successfully!',
+    isArray: true,
+    type: GetTagDto
+  })
+  @ApiUnauthorizedResponse()
+  async followingTags(
+    @Request() req
+  ){
+    const tags = await this.profileService.userFollowedTags(req.user.id)
+    const result = tags.map(item => new GetTagDto(item.Tag.id, item.Tag.name));
+    return result;
   }
 }

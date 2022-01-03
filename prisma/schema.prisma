@@ -114,8 +114,8 @@ model Invest {
 }
 
 model FollowTag {
-  id     Int   @unique @default(autoincrement())
   @@id([userId, tagId])
+  id     Int   @unique @default(autoincrement())
   userId Int
   tagId  Int
 
