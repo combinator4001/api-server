@@ -6,6 +6,9 @@ import { TagModule } from 'src/tag/tag.module';
 import { CompanyModule } from '../company/company.module';
 import { UserModule } from '../user/user.module';
 import { GlobalModule } from './global.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { PeriodicEmailingModule } from 'src/periodic-emailing/periodic-emailing.module';
+
 @Module({
     imports : [
         GlobalModule,
@@ -14,7 +17,9 @@ import { GlobalModule } from './global.module';
         CompanyModule,
         BlogModule,
         TagModule,
-        InvestModule
+        InvestModule,
+        PeriodicEmailingModule,
+        ScheduleModule.forRoot()
     ]
 })
 export class AppModule {}
