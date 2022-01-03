@@ -215,6 +215,7 @@ export class ProfileController{
 
 
   @Post("user/tags")
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: "Follows a tag for a user.",
     description: "Each user can follow at most 5 tags."
