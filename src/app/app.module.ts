@@ -8,6 +8,7 @@ import { UserModule } from '../user/user.module';
 import { GlobalModule } from './global.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PeriodicEmailingModule } from 'src/periodic-emailing/periodic-emailing.module';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
     imports : [
@@ -19,7 +20,13 @@ import { PeriodicEmailingModule } from 'src/periodic-emailing/periodic-emailing.
         TagModule,
         InvestModule,
         PeriodicEmailingModule,
-        ScheduleModule.forRoot()
+        ScheduleModule.forRoot(),
+        BullModule.forRoot({
+            redis: {
+              host: 'localhost',
+              port: 6379,
+            },
+        })
     ]
 })
 export class AppModule {}
