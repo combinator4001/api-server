@@ -28,8 +28,9 @@ export class PeriodicEmailingService {
      */
     @Cron('0 1 1 * *')
     async scheduleEmails() {
+        const limit = 1000;
         let users = await this.prisma.user.findMany({
-            take: 1000,
+            take: limit,
             orderBy: {
                 id: 'asc'
             },
@@ -41,26 +42,37 @@ export class PeriodicEmailingService {
                 }
             }
         });
+        if(users.length === 0) return;
+        let myCursor = users[users.length - 1].id;
+        await this.addJobs(users);
 
-        do {
-            // users = await this.prisma.user.findMany({
-            //     take: 1000,
-            //     orderBy: {
-            //         id: 'asc'
-            //     },
-            //     include: {
-            //         followingTags: true
-            //     }
-            // });
-        } while (1);
-
+        while (users.length === limit) {
+            let users = await this.prisma.user.findMany({
+                take: limit,
+                skip: 1,
+                cursor: {
+                    id: myCursor
+                },
+                orderBy: {
+                    id: 'asc'
+                },
+                include: {
+                    followingTags: {
+                        select: {
+                            Tag: true
+                        }
+                    }
+                }
+            });
+            await this.addJobs(users);
+        }
     }
 
     /**
      * function for adding jobs to the email queue
      * @param users 
      */
-    async addJobs(users: (User & {
+    private async addJobs(users: (User & {
         followingTags: {
             Tag: Tag
         }[]
@@ -76,7 +88,7 @@ export class PeriodicEmailingService {
             if(tags.length === 0){
                 continue;
             }
-            
+
             const job = await this.monthlyMailsQueue.add({
                 id: user.id,
                 username: user.username,
