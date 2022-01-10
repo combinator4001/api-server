@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from 'src/app/prisma.service';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
+import { User, Tag } from '@prisma/client';
 
 @Injectable()
 export class PeriodicEmailingService {
@@ -26,10 +27,65 @@ export class PeriodicEmailingService {
      * 
      */
     @Cron('0 1 1 * *')
-    async addJobs() {
-        const job = await this.monthlyMailsQueue.add({
-            name: `job ${Date.now()}`,
+    async scheduleEmails() {
+        let users = await this.prisma.user.findMany({
+            take: 1000,
+            orderBy: {
+                id: 'asc'
+            },
+            include: {
+                followingTags: {
+                    select: {
+                        Tag: true
+                    }
+                }
+            }
         });
-        this.logger.debug(`Job added, ${Date.now()}`);
+
+        do {
+            // users = await this.prisma.user.findMany({
+            //     take: 1000,
+            //     orderBy: {
+            //         id: 'asc'
+            //     },
+            //     include: {
+            //         followingTags: true
+            //     }
+            // });
+        } while (1);
+
+    }
+
+    /**
+     * function for adding jobs to the email queue
+     * @param users 
+     */
+    async addJobs(users: (User & {
+        followingTags: {
+            Tag: Tag
+        }[]
+    })[]){
+        for (const user of users) {
+            const tags = user.followingTags.map(item => {
+                return {
+                    id: item.Tag.id,
+                    name: item.Tag.name
+                }
+            });
+
+            if(tags.length === 0){
+                continue;
+            }
+            
+            const job = await this.monthlyMailsQueue.add({
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                tags: tags
+            },
+            {
+                removeOnComplete: true
+            });
+        }
     }
 }
