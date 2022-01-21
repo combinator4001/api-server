@@ -1,5 +1,5 @@
-import { Controller, Delete, Get, HttpCode, HttpException, HttpStatus, NotFoundException, Param, Put, Request, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiExtraModels, ApiHeader, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from "@nestjs/swagger";
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, NotFoundException, Param, Post, Put, Request, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiCreatedResponse, ApiExtraModels, ApiHeader, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiPayloadTooLargeResponse, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/auth/general/jwt-auth.guard";
 import { ProfileService } from "../services/profile.service";
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -12,11 +12,17 @@ import { Role, User } from "@prisma/client";
 import { GetPrivateCompanyProfile, GetPrivatePersonProfile } from './../dtos/get-my-profile-res.dto';
 import { GetPublicCompanyProfile, GetPublicPersonProfile } from './../dtos/get-public-profile-res.dto';
 import { GetBlogsDto } from "../dtos/get-blogs.dto";
+import { FollowTagReqDto } from "../dtos/follow-tag.dto";
+import { PrismaService } from "src/app/prisma.service";
+import { GetTagDto } from "src/tag/dto/get-tag.dto";
 
 @ApiTags('Profile')
 @Controller()
 export class ProfileController{
-    constructor(private profileService : ProfileService){}
+    constructor(
+      private profileService: ProfileService,
+      private prisma: PrismaService
+    ){}
 
     @Get('/:username/profile')
     @ApiOperation({summary : 'Returns public profile infos.'})
@@ -206,5 +212,140 @@ export class ProfileController{
       throw new NotFoundException();
     }
     return this.profileService.getBlogsList(user.id);
+  }
+
+
+  @Post("user/tags")
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: "Follows a tag for a user.",
+    description: "Each user can follow at most 5 tags."
+  })
+  @ApiHeader({name : 'Authorization'})
+  @ApiCreatedResponse({
+    description: "Followed tag successfully!"
+  })
+  @ApiBadRequestResponse({
+    description: 
+      `\n
+      Sorry, you can’t follow more than 5 tags! \n
+      Tag id is not valid. \n
+      You have already followed this tag! \n
+      Invalid fields(message will be shown). \n`
+  })
+  @ApiUnauthorizedResponse()
+  async followTag(
+    @Body() body: FollowTagReqDto,
+    @Request() req
+  ) {
+    //check if tag id is valid
+    const tag = await this.prisma.tag.findUnique({
+      where: {
+        id: body.tagId
+      }
+    });
+
+    if(!tag){
+      throw new BadRequestException("Tag id is not valid!");
+    }
+
+    //check number of followed tags
+    const tags = await this.prisma.followTag.findMany({
+      where: {
+        userId: req.user.id
+      }
+    });
+
+    if(tags.length === 5){
+      throw new BadRequestException("Sorry, you can’t follow more than 5 tags!");
+    }
+
+    //every thing seems to be good, we can add the record
+    try {
+      await this.prisma.followTag.create({
+        data: {
+          userId: req.user.id,
+          tagId: body.tagId
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException("You have already followed this tag!");
+    }
+
+    return {
+      statusCode: HttpStatus.CREATED,
+      message: "Followed tag successfully!"
+    };
+  }
+
+  @Get("user/tags")
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: "Returns tags, which have been followed by the user."
+  })
+  @ApiHeader({name : 'Authorization'})
+  @ApiOkResponse({
+    description: 'Fetched tags successfully!',
+    isArray: true,
+    type: GetTagDto
+  })
+  @ApiUnauthorizedResponse()
+  async followingTags(
+    @Request() req
+  ){
+    const tags = await this.profileService.userFollowedTags(req.user.id)
+    const result = tags.map(item => new GetTagDto(item.Tag.id, item.Tag.name));
+    return result;
+  }
+
+  @Delete("user/tags")
+  @ApiOperation({
+    summary: "Unfollows a tag for the user."
+  })
+  @UseGuards(JwtAuthGuard)
+  @ApiHeader({name : 'Authorization'})
+  @ApiOkResponse({description: "Unfollowed the tag!"})
+  @ApiBadRequestResponse({
+    description: 
+      `\n
+      Tag id is not valid. \n
+      You haven’t followed this tag! \n
+      Invalid fields(message will be shown). \n`
+  })
+  @ApiUnauthorizedResponse()
+  async unfollowTag(
+    @Body() body: FollowTagReqDto,
+    @Request() req
+  ){
+    //check if tag id is valid
+    const tag = await this.prisma.tag.findUnique({
+      where: {
+        id: body.tagId
+      }
+    });
+
+    if(!tag){
+      throw new BadRequestException("Tag id is not valid!");
+    }
+    
+    try {
+      await this.prisma.followTag.deleteMany({
+        where: {
+          AND: [
+            { userId: req.user.id },
+            { tagId: body.tagId }
+          ]
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException("You haven’t followed this tag!");
+    }
+    
+    return {
+      statusCode: HttpStatus.OK,
+      message: "Unfollowed the tag!"
+    };
   }
 }

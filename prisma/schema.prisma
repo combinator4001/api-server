@@ -31,9 +31,10 @@ model User {
   person  Person?
   company Company?
 
-  blogs      Blog[]
-  followedBy User[] @relation("UserFollows", references: [id], onDelete: Cascade)
-  following  User[] @relation("UserFollows", references: [id])
+  blogs         Blog[]
+  followedBy    User[]      @relation("UserFollows", references: [id])
+  following     User[]      @relation("UserFollows", references: [id])
+  followingTags FollowTag[]
 }
 
 model Admin {
@@ -76,9 +77,10 @@ model Blog {
 }
 
 model Tag {
-  id    Int           @id @default(autoincrement())
-  name  String        @unique
-  blogs TagsOnBlogs[]
+  id             Int           @id @default(autoincrement())
+  name           String        @unique
+  blogs          TagsOnBlogs[]
+  followedByUser FollowTag[]
 }
 
 //join table
@@ -109,4 +111,14 @@ model Invest {
   person      Person      @relation(fields: [investor_id], references: [user_id], onDelete: Cascade)
 
   @@id([investor_id, company_id])
+}
+
+model FollowTag {
+  id     Int @unique @default(autoincrement())
+  userId Int
+  tagId  Int
+
+  User User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([userId, tagId])
 }

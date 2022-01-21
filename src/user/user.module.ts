@@ -8,9 +8,12 @@ import { FollowersController } from './controllers/followers.controller';
 import { FollowersService } from './services/followers.service';
 import { ProfileController } from './controllers/profile.controller';
 import { ProfileService } from './services/profile.service';
+import { TagModule } from 'src/tag/tag.module';
 
 @Module({
-  imports : [AuthModule],
+  imports : [
+    AuthModule
+  ],
   controllers: [
     UserController,
     FollowingController, 
