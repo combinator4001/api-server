@@ -32,7 +32,7 @@ model User {
   company Company?
 
   blogs         Blog[]
-  followedBy    User[]      @relation("UserFollows", references: [id], onDelete: Cascade)
+  followedBy    User[]      @relation("UserFollows", references: [id])
   following     User[]      @relation("UserFollows", references: [id])
   followingTags FollowTag[]
 }

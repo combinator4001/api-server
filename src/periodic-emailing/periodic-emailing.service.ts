@@ -14,6 +14,16 @@ export class PeriodicEmailingService {
 
     private readonly logger = new Logger(PeriodicEmailingService.name);
 
+    private yyyymmdd(date: Date): string {
+        var mm = date.getMonth() + 1; // getMonth() is zero-based
+        var dd = date.getDate();
+      
+        return [date.getFullYear(),
+                (mm>9 ? '' : '0') + mm,
+                (dd>9 ? '' : '0') + dd
+               ].join('-');
+    };
+
     /**
      * Gui:
      * https://crontab.guru/#0_1_1_*_*
@@ -29,6 +39,8 @@ export class PeriodicEmailingService {
     @Cron('0 1 1 * *')
     async scheduleEmails() {
         const limit = 1000;
+        let date = new Date();
+        date = new Date(this.yyyymmdd(date));
         let users = await this.prisma.user.findMany({
             take: limit,
             orderBy: {
@@ -44,7 +56,7 @@ export class PeriodicEmailingService {
         });
         if(users.length === 0) return;
         let myCursor = users[users.length - 1].id;
-        await this.addJobs(users);
+        await this.addJobs(users, date);
 
         while (users.length === limit) {
             let users = await this.prisma.user.findMany({
@@ -64,7 +76,7 @@ export class PeriodicEmailingService {
                     }
                 }
             });
-            await this.addJobs(users);
+            await this.addJobs(users, date);
         }
     }
 
@@ -76,7 +88,7 @@ export class PeriodicEmailingService {
         followingTags: {
             Tag: Tag
         }[]
-    })[]){
+    })[], date: Date){
         for (const user of users) {
             const tags = user.followingTags.map(item => {
                 return {
@@ -93,7 +105,8 @@ export class PeriodicEmailingService {
                 id: user.id,
                 username: user.username,
                 email: user.email,
-                tags: tags
+                tags: tags,
+                date: date
             },
             {
                 removeOnComplete: true
