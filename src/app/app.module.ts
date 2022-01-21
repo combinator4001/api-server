@@ -6,16 +6,27 @@ import { TagModule } from 'src/tag/tag.module';
 import { CompanyModule } from '../company/company.module';
 import { UserModule } from '../user/user.module';
 import { GlobalModule } from './global.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { PeriodicEmailingModule } from 'src/periodic-emailing/periodic-emailing.module';
+import { BullModule } from '@nestjs/bull';
+
 @Module({
-    imports : 
-        [
-            GlobalModule,
-            UserModule,
-            PersonModule,
-            CompanyModule,
-            BlogModule,
-            TagModule,
-            InvestModule
-        ]
+    imports : [
+        GlobalModule,
+        UserModule,
+        PersonModule,
+        CompanyModule,
+        BlogModule,
+        TagModule,
+        InvestModule,
+        PeriodicEmailingModule,
+        ScheduleModule.forRoot(),
+        BullModule.forRoot({
+            redis: {
+              host: 'localhost',
+              port: 6379,
+            },
+        })
+    ]
 })
 export class AppModule {}

@@ -208,4 +208,15 @@ export class ProfileService{
         );
         return result;
     }
+
+    async userFollowedTags(userId: number){
+        return await this.prisma.followTag.findMany({
+          where: {
+            userId: userId
+          },
+          include: {
+            Tag: true
+          }
+        });
+    }
 }
