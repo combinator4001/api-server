@@ -40,10 +40,9 @@ export class FollowingController{
     // BadRequest : 1.Already followed 2.followingUsername not found
     @ApiBadRequestResponse({description : 
         `\n
-        Empty field!\n
+        Invalid field!\n
         followingUsername not found.\n
         Can’t follow yourself!\n
-        Already Following!\n
         `
     })
     // Unauthorized : 1.invalid jwt, 2.malicious payload(user not found)
@@ -61,9 +60,8 @@ export class FollowingController{
     @ApiBadRequestResponse({description : 
         `\n
         unfollowUsername not found.\n
-        Empty field!\n
+        Invalid field!\n
         Can’t unfollow yourself!\n
-        Not following to unfollow!\n
         `
     })
     @ApiUnauthorizedResponse({description : 'Unauthorized!'})
