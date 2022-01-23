@@ -24,11 +24,11 @@ export class PersonController {
     type : CreatePersonBadRequestResDto
   })
   @ApiUnauthorizedResponse({
-    description : 'Username already exists. | Email already exists.',
+    description : `\n
+    Username already exists.\n
+    Email already exists.\n
+    `,
     type : CreatePersonUnauthorizedResDto
-  })
-  @ApiInternalServerErrorResponse({
-    description : 'Failed to register, try again later.'
   })
   async create(@Body() createPersonReqDto: CreatePersonReqDto) {
     return await this.personService.create(createPersonReqDto);
@@ -43,6 +43,13 @@ export class PersonController {
   @ApiOkResponse({
     description : 'Person profile updated',
     type : UpdatePersonResDto
+  })
+  @ApiBadRequestResponse({
+    description: 
+      `\n
+      Invalid fields!\n
+      Email already exist!\n
+      `
   })
   @ApiUnauthorizedResponse({
     description : 'Unauthorized!'

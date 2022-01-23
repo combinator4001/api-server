@@ -127,6 +127,7 @@ export class ProfileController{
       type : ImageUploadResDto
     })
     @ApiBadRequestResponse({description : 'File must be a png, jpg/jpeg. |  Invalid file.'})
+    @ApiUnauthorizedResponse({description: "Unauthorized!"})
     @ApiPayloadTooLargeResponse({description : 'File too large. File should be less than 300KiB.'})
     async updateImage(@UploadedFile() file: Express.Multer.File, @Request() req){
       const fileName = file?.filename;
@@ -136,7 +137,7 @@ export class ProfileController{
         //wrong file extension
         throw new HttpException({
           statusCode : HttpStatus.BAD_REQUEST,
-          message : 'File must be an iamge in png, jpg/jpeg format!'
+          message : 'File must be an image in png, jpg/jpeg format!'
         }, HttpStatus.BAD_REQUEST);
       }
       else{
@@ -233,7 +234,7 @@ export class ProfileController{
       You have already followed this tag! \n
       Invalid fields(message will be shown). \n`
   })
-  @ApiUnauthorizedResponse()
+  @ApiUnauthorizedResponse({description : 'Unauthorized!'})
   async followTag(
     @Body() body: FollowTagReqDto,
     @Request() req
@@ -290,7 +291,7 @@ export class ProfileController{
     isArray: true,
     type: GetTagDto
   })
-  @ApiUnauthorizedResponse()
+  @ApiUnauthorizedResponse({description : 'Unauthorized!'})
   async followingTags(
     @Request() req
   ){
@@ -313,7 +314,7 @@ export class ProfileController{
       You haven’t followed this tag! \n
       Invalid fields(message will be shown). \n`
   })
-  @ApiUnauthorizedResponse()
+  @ApiUnauthorizedResponse({description : 'Unauthorized!'})
   async unfollowTag(
     @Body() body: FollowTagReqDto,
     @Request() req

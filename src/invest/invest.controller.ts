@@ -24,8 +24,21 @@ export class InvestController {
     description: "Person invests in a company."
   })
   @ApiCreatedResponse({description: 'Invested successfully!'})
-  @ApiBadRequestResponse({description: "Company not found! | Username is not for a company! | Already invested!"})
-  @ApiUnauthorizedResponse({description: "Unauthorized! | Only person users can invest!"})
+  @ApiBadRequestResponse({
+    description: 
+      `\n
+      Company not found!\n
+      Username is not for a company!\n
+      Already invested!\n
+      `
+  })
+  @ApiUnauthorizedResponse({
+    description: 
+      `\n
+      Unauthorized!\n
+      Only person users can invest!\n
+      `
+  })
   async newInvest(@Body() createInvestDto: CreateInvestDto, @Req() req) {
     //validation
     if(req.user.role !== Role.PERSON){
@@ -74,7 +87,7 @@ export class InvestController {
     isArray: true
   })
   @ApiBadRequestResponse({description: "Page and limit must be positive."})
-  @ApiUnauthorizedResponse()
+  @ApiUnauthorizedResponse({description: "Unauthorized!"})
   async getAllInvests(
     @Query('page', ParseIntPipe) page: number,
     @Query('limit', ParseIntPipe) limit: number,
@@ -142,8 +155,21 @@ export class InvestController {
   @ApiHeader({name : 'Authorization'})
   @ApiOperation({summary: "Accept or reject an invest"})
   @ApiOkResponse({description: "status updated!"})
-  @ApiBadRequestResponse({description: "There is no invest with this id!"})
-  @ApiUnauthorizedResponse({description: "Only companies can change the state of an invest!"})
+  @ApiBadRequestResponse({
+    description: 
+      `\n
+      Invalid fields!\n
+      There is no invest with this id!\n
+      This invest is not in a pending state!\n
+      `
+  })
+  @ApiUnauthorizedResponse({
+    description: 
+      `\n
+      Unauthorized!\n
+      Only companies can change the state of an invest!\n
+      `
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateInvestDto: UpdateInvestDto,
@@ -154,16 +180,27 @@ export class InvestController {
       throw new UnauthorizedException("Only companies can change the state of an invest!");
     }
 
-    try{
-      await this.investService.update(id, updateInvestDto);
-      return {
-        statusCode: HttpStatus.OK,
-        message: "status updated!"
+    const Invest = await this.prisma.invest.findUnique({
+      where: {
+        id: id
       }
-    }
-    catch{
+    });
+
+    if(!Invest){
       throw new BadRequestException("There is no invest with this id!");
+    }else if(Invest.company_id !== req.user.id){
+      //other companies
+      throw new UnauthorizedException();
+    }else if(Invest.state !== InvestState.PENDING){
+      //Already accepted or rejected
+      throw new BadRequestException("This invest is not in a pending state!");
     }
+
+    await this.investService.update(id, updateInvestDto);
+    return {
+      statusCode: HttpStatus.OK,
+      message: "status updated!"
+    };
   }
 
   @Delete('invest/:id')
@@ -171,8 +208,20 @@ export class InvestController {
   @ApiHeader({name : 'Authorization'})
   @ApiOperation({summary: "Cancel a pendeing invest"})
   @ApiOkResponse({description: "Canceled!"})
-  @ApiBadRequestResponse({description: "There is no invest with this id! | This invest is not in a pending state!"})
-  @ApiUnauthorizedResponse({description: "Only persons can cancel a pending invest!"})
+  @ApiBadRequestResponse({
+    description: 
+      `\n
+      There is no invest with this id!\n
+      This invest is not in a pending state!\n
+      `
+    })
+  @ApiUnauthorizedResponse({
+    description: 
+      `\n
+      Unauthorized!\n
+      Only persons can cancel a pending invest!\n
+      `
+    })
   async remove(
     @Param('id', ParseIntPipe) id: number,
     @Req() req
@@ -189,6 +238,10 @@ export class InvestController {
 
     if(!invest){
       throw new BadRequestException("There is no invest with this id!");
+    }
+    else if(invest.investor_id !== req.user.id){
+      //other persons
+      throw new UnauthorizedException();
     }
     else if(invest.state !== InvestState.PENDING){
       throw new BadRequestException("This invest is not in a pending state!");

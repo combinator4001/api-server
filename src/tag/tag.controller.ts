@@ -16,7 +16,11 @@ export class TagController {
     description: "Tag created."
   })
   @ApiBadRequestResponse({
-    description: "Invalid fields! | Tag name already exist!"
+    description: 
+      `\n
+      Invalid fields!\n
+      Tag name already exist!\n
+      `
   })
   async create(@Body() createTagDto: CreateTagDto) {
     try{
@@ -56,7 +60,11 @@ export class TagController {
   @Patch(':id')
   @ApiOperation({summary: "Updates name of a tag."})
   @ApiOkResponse({description: "Name changed successfully!"})
-  @ApiBadRequestResponse({description: "Invalid id! | Invalid name!"})
+  @ApiBadRequestResponse({description: 
+  `\n
+    Invalid id!\n
+    Invalid name!\n
+  `})
   async update(@Param('id', ParseIntPipe) id: number, @Body() updateTagDto: UpdateTagDto) {
     try{
       await this.tagService.update(id, updateTagDto.newName);
