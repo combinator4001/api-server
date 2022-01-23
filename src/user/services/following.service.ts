@@ -64,23 +64,27 @@ export class FollowingService{
             throw new BadRequestException('Can’t follow yourself!');
         }
 
-        const result = await this.prisma.user.update({
-            where : {id : user.id},
-            data : {
-                following : {
-                    connect : {
-                        id : following.id
+        try{
+            const result = await this.prisma.user.update({
+                where : {id : user.id},
+                data : {
+                    following : {
+                        connect : {
+                            id : following.id
+                        }
                     }
                 }
-            }
-        });
+            });
 
-        if(result){
-            //201
-            return {
-                statusCode : HttpStatus.CREATED,
-                message : 'Followed!'
+            if(result){
+                //201
+                return {
+                    statusCode : HttpStatus.CREATED,
+                    message : 'Followed!'
+                }
             }
+        }catch{
+            throw new BadRequestException("Already Following!");
         }
     }
 
@@ -95,7 +99,7 @@ export class FollowingService{
             where : {
                 id : id
             }
-        })
+        });
 
         if(!user){
             // 401
@@ -107,36 +111,42 @@ export class FollowingService{
         }
 
         const unfollowUser = await this.prisma.user.findUnique({
-        where : {
-            username : unfollowUsername
-        }
+            where : {
+                username : unfollowUsername
+            }
         });
 
         if(!unfollowUser){
-        // no one to unfollow
-        return {
-            statusCode : HttpStatus.BAD_REQUEST,
-            message : 'unfollowUsername not found!'
-        };
+            // no one to unfollow
+            throw new BadRequestException('unfollowUsername not found!');
         }
 
-        const result = await this.prisma.user.update({
-        where : {id : user.id},
-        data : {
-            following : {
-            disconnect : {
-                id : unfollowUser.id
-            }
-            }
+        if(unfollowUser.id === id){
+            throw new BadRequestException('Can’t unfollow yourself!');
         }
-        });
 
-        if(result){
-        //201
-        return {
-            statusCode : HttpStatus.CREATED,
-            message : 'Unfollowed!'
-        };
+        try{
+            const result = await this.prisma.user.update({
+                where : {id : user.id},
+                data : {
+                    following : {
+                    disconnect : {
+                        id : unfollowUser.id
+                    }
+                    }
+                }
+            });
+
+            if(result){
+            //200
+            return {
+                statusCode : HttpStatus.OK,
+                message : 'Unfollowed!'
+            };
+        }
+        }
+        catch{
+            throw new BadRequestException("Not following to unfollow!");
         }
     }
 }

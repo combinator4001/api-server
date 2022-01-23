@@ -43,6 +43,7 @@ export class FollowingController{
         Empty field!\n
         followingUsername not found.\n
         Can’t follow yourself!\n
+        Already Following!\n
         `
     })
     // Unauthorized : 1.invalid jwt, 2.malicious payload(user not found)
@@ -57,9 +58,15 @@ export class FollowingController{
     @ApiOperation({ summary: 'User unfollows another user.' })
     @ApiHeader({name : 'Authorization'})
     @ApiOkResponse({ description : 'Unfollowed successfully!'})
-    @ApiBadRequestResponse({description : 'unfollowUsername not found.'})
+    @ApiBadRequestResponse({description : 
+        `\n
+        unfollowUsername not found.\n
+        Empty field!\n
+        Can’t unfollow yourself!\n
+        Not following to unfollow!\n
+        `
+    })
     @ApiUnauthorizedResponse({description : 'Unauthorized!'})
-    @ApiInternalServerErrorResponse({description : 'Server error'})
     unFollow(@Request() req, @Body() unfollowReqDto : UnfollowReqDto){
         return this.followingService.unfollow(req.user.id, unfollowReqDto.unfollowUsername);
     }
