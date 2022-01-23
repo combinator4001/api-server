@@ -87,11 +87,12 @@ export class UserService {
    * @param email 
    */
   async sendForgetPassEmail(forgetPassToken : string, email : string) : Promise<void>{
+    const url = frontServerUrl + '/reset/' + forgetPassToken;
     const body : string = `
       <h1>Trouble signing in?</h1>
       <br>
       <p>Resetting your password is easy. Just press the link below and follow the instructions.</p>
-      ${frontServerUrl + '/reset/' + forgetPassToken}
+      <p><a href="${url}">Reset</a></p>
       <br>
       If you did not make this request then please ignore this email.
     `;
