@@ -45,6 +45,13 @@ export class CompanyController {
     description : 'company profile updated',
     type : UpdateCompanyResDto
   })
+  @ApiBadRequestResponse({
+    description: 
+      `\n
+      Invalid fields!\n
+      Email already exist!\n
+      `
+  })
   @ApiUnauthorizedResponse({
     description : 'Unauthorized!'
   })

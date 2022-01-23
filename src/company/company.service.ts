@@ -2,11 +2,12 @@ import { CreateCompanyReqDto } from './dto/create-company-req.dto';
 import { PrismaService } from 'src/app/prisma.service';
 import { Company , Role , User } from '.prisma/client';
 import * as bcrypt from 'bcrypt';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
 import { CreateCompanyCreatedResDto } from './dto/create-company-res.dto';
-import { saltOrRounds } from 'src/variables';
+import { frontServerUrl, saltOrRounds } from 'src/variables';
 import { UpdateCompanyReqDto } from './dto/update-company-req.dto';
+import { EmailService } from 'src/app/email.service';
 
 
 
@@ -14,7 +15,8 @@ import { UpdateCompanyReqDto } from './dto/update-company-req.dto';
 export class CompanyService {
   constructor(
     private prisma : PrismaService,
-    private authService: AuthService
+    private authService: AuthService,
+    private emailService: EmailService
   ){}
 
   /**
@@ -88,6 +90,24 @@ export class CompanyService {
       user.access_token = await this.authService.createToken(resultUser.id, resultUser.username, resultUser.role);
       user.name = name;
       user.owners = owners;
+      
+      const verifyEmailToken = await this.authService.createVerifyEmailToken(
+        resultUser.id,
+        resultUser.username,
+        resultUser.role,
+        resultUser.verifiedEmail
+      );
+
+      const link = frontServerUrl + '/verify' + '?token=' + verifyEmailToken;
+      const htmlBody : string = `
+          <h1>Email verification</h1>
+          <br>
+          <p>Hello ${resultUser.username}</p>
+          <p>You registered an account on Combinator.com, before being able to use your account you need to verify that this is your email address by clicking here: <a href="${link}">Verify</a></p>
+          <br>
+          If you did not make this request then please ignore this email.
+      `;
+      this.emailService.sendOneMail(user.email, 'Email verify', htmlBody);
       return new CreateCompanyCreatedResDto(user);
 		}
 		else{
@@ -108,6 +128,17 @@ export class CompanyService {
         company : true
       }
     })
+
+    const other = await this.prisma.user.findUnique({
+      where: {
+        email: updateCompanyReqDto.email
+      }
+    });
+
+    if(other && other.id !== companyUser.id){
+      throw new BadRequestException("Email already exist!");
+    }
+
 
     const hashedPassword = updateCompanyReqDto.password ? await bcrypt.hash(updateCompanyReqDto.password, saltOrRounds) : companyUser.password;
 

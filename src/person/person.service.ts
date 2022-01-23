@@ -87,10 +87,10 @@ export class PersonService {
       user.lastName = lastName;
       
       const verifyEmailToken = await this.authService.createVerifyEmailToken(
-        user.id,
-        user.username,
-        user.role,
-        user.verifiedEmail
+        resultUser.id,
+        resultUser.username,
+        resultUser.role,
+        resultUser.verifiedEmail
       );
 
       const link = frontServerUrl + '/verify' + '?token=' + verifyEmailToken;
