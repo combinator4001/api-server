@@ -53,7 +53,12 @@ export class UserController {
     @Post('auth/password')
     @ApiOperation({summary : 'sends a reset password link.'})
     @ApiCreatedResponse({description : 'Email has been sent!'})
-    @ApiBadRequestResponse({description : 'Username not found!'})
+    @ApiBadRequestResponse({description :
+        `\n
+        Username not found!\n
+        Username field is empty!\n
+        `
+        })
     async sendResetPassEmail(@Body() body: SendResetPassLinkDto) {
         const user = await this.userService.findUserByUsername(body.username);
         if(!user){
@@ -85,6 +90,7 @@ export class UserController {
     @ApiOperation({summary : 'resets the given user password.'})
     @ApiHeader({name : 'Authorization'})
     @ApiOkResponse({description : 'Password changed successfully!'})
+    @ApiBadRequestResponse({description: 'Invalid field, error message will be sent.'})
     @ApiUnauthorizedResponse({description : 'Unauthorized!'})
     async resetPassword(@Request() req, @Body() body: ChangePassDto ) {
         // req.user = {
