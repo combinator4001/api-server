@@ -1,17 +1,19 @@
 import { Person, Role, User } from '.prisma/client';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from './../app/prisma.service';
 import { CreatePersonReqDto } from './dto/create-person-req.dto';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from 'src/auth/auth.service';
 import {CreatePersonCreatedResDto} from './dto/create-person-res.dto';
 import { UpdatePersonReqDto } from './dto/update-person-req.dto';
-import { saltOrRounds } from 'src/variables';
+import { frontServerUrl, saltOrRounds } from 'src/variables';
+import { EmailService } from 'src/app/email.service';
 @Injectable()
 export class PersonService {
   constructor(
     private prisma : PrismaService,
-    private authService: AuthService
+    private authService: AuthService,
+    private emailService: EmailService
   ){}
 
   /**
@@ -47,7 +49,7 @@ export class PersonService {
       }
       else if(user.email === email){
         //401
-        //username exists
+        //email exists
         throw new HttpException({
           statusCode : HttpStatus.UNAUTHORIZED,
           message : 'Email already exists.'
@@ -83,6 +85,24 @@ export class PersonService {
       user.access_token = await this.authService.createToken(resultUser.id, resultUser.username, resultUser.role);
       user.firstName = firstName;
       user.lastName = lastName;
+      
+      const verifyEmailToken = await this.authService.createVerifyEmailToken(
+        resultUser.id,
+        resultUser.username,
+        resultUser.role,
+        resultUser.verifiedEmail
+      );
+
+      const link = frontServerUrl + '/verify' + '?token=' + verifyEmailToken;
+      const htmlBody : string = `
+          <h1>Email verification</h1>
+          <br>
+          <p>Hello ${resultUser.username}</p>
+          <p>You registered an account on Combinator.com, before being able to use your account you need to verify that this is your email address by clicking here: <a href="${link}">Verify</a></p>
+          <br>
+          If you did not make this request then please ignore this email.
+      `;
+      this.emailService.sendOneMail(user.email, 'Email verify', htmlBody);
       return new CreatePersonCreatedResDto(user);
 		}
 		else{
@@ -103,6 +123,16 @@ export class PersonService {
         person : true
       }
     })
+
+    const other = await this.prisma.user.findUnique({
+      where: {
+        email: updatePersonReqDto.email
+      }
+    });
+
+    if(other && other.id !== personUser.id){
+      throw new BadRequestException("Email already exist!");
+    }
 
     const hashedPassword = updatePersonReqDto.password ? await bcrypt.hash(updatePersonReqDto.password, saltOrRounds) : personUser.password;
 

@@ -24,11 +24,11 @@ export class CompanyController {
     type : CreateCompanyBadRequestResDto
   })
   @ApiUnauthorizedResponse({
-    description : 'Username already exists. | Email already exists.',
+    description : `\n
+      Username already exists.\n
+      Email already exists.\n
+      `,
     type:CreateCompanyUnauthorizedResDto
-  })
-  @ApiInternalServerErrorResponse({
-    description : 'Failed to register, try again later.'
   })
   async create(@Body() createCompanyReqDto: CreateCompanyReqDto) {
     return await this.companyService.create(createCompanyReqDto);
@@ -44,6 +44,13 @@ export class CompanyController {
   @ApiOkResponse({
     description : 'company profile updated',
     type : UpdateCompanyResDto
+  })
+  @ApiBadRequestResponse({
+    description: 
+      `\n
+      Invalid fields!\n
+      Email already exist!\n
+      `
   })
   @ApiUnauthorizedResponse({
     description : 'Unauthorized!'

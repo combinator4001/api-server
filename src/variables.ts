@@ -10,6 +10,9 @@ export const passwordMaxLength = 100;
 export const nameMinLength = 1;
 export const nameMaxLength = 50;
 
+//bio
+export const bioMaxLength = 300;
+
 // bcrypt
 export const saltOrRounds = 10;
 
