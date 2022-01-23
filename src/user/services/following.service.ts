@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import { BadRequestException, HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { User } from "@prisma/client";
 import { PrismaService } from "src/app/prisma.service";
 
@@ -38,7 +38,7 @@ export class FollowingService{
             where : {
                 id : id
             }
-        })
+        });
 
         if(!user){
             // 401
@@ -53,14 +53,15 @@ export class FollowingService{
             where : {
                 username : followingUsername
             }
-        })
+        });
 
         if(!following){
             // no one to follow
-            return {
-                statusCode : HttpStatus.BAD_REQUEST,
-                message : 'followingUsername not found!'
-            }
+            throw new BadRequestException('followingUsername not found!');
+        }
+
+        if(following.id === id){
+            throw new BadRequestException('Can’t follow yourself!');
         }
 
         const result = await this.prisma.user.update({
@@ -72,7 +73,7 @@ export class FollowingService{
                     }
                 }
             }
-        })
+        });
 
         if(result){
             //201

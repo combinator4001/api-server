@@ -18,7 +18,6 @@ export class FollowingController{
         type : GetFollowingResDto
     })
     @ApiBadRequestResponse({description : 'Requested username doesn’t exist!'})
-    @ApiInternalServerErrorResponse({description : 'Server error'})
     async getFollowing(@Param('username') username : string) {
         const result = await this.followingService.getFollowing(username);
 
@@ -39,10 +38,15 @@ export class FollowingController{
     @ApiOperation({ summary: 'User follows another user.' })
     @ApiCreatedResponse({ description : 'Followed successfully!'})
     // BadRequest : 1.Already followed 2.followingUsername not found
-    @ApiBadRequestResponse({description : 'followingUsername not found.'})
+    @ApiBadRequestResponse({description : 
+        `\n
+        Empty field!\n
+        followingUsername not found.\n
+        Can’t follow yourself!\n
+        `
+    })
     // Unauthorized : 1.invalid jwt, 2.malicious payload(user not found)
     @ApiUnauthorizedResponse({description : 'Unauthorized!'})
-    @ApiInternalServerErrorResponse({description : 'Server error'})
     follow(@Request() req, @Body() followReqDto : FollowReqDto){
       //req.user is the payload which we have received.
       return this.followingService.follow(req.user.id, followReqDto.followingUsername);
