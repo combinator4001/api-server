@@ -44,7 +44,7 @@ export class AuthService {
             username, 
             role
         };
-        return await this.jwtService.sign(payload, {expiresIn : '1h'});
+        return await this.jwtService.sign(payload, {expiresIn : '2h'});
     }
 
     /**
