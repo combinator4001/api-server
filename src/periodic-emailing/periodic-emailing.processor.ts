@@ -68,7 +68,8 @@ export class PeriodicEmailingProcessor {
         <h3>Hi ${data.username}!</h3>
           <p>Unfortunately past month there was no blogs written about tags, which you follow:)</p>
       `;
-      this.emailService.sendOneMail(data.email, "Tags you follow", body)
+      this.emailService.sendOneMail(data.email, "Tags you follow", body);
+      return;
     }
   
     if(blogs.length > 5) {
