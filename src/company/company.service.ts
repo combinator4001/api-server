@@ -50,7 +50,7 @@ export class CompanyService {
       }
       else if(user.email === email){
         //401
-        //username exists
+        //email exists
         throw new HttpException({
           statusCode : HttpStatus.UNAUTHORIZED,
           message : 'Email already exists.'
