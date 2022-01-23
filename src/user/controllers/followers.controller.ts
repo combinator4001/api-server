@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Request, UseGuards } from "@nestjs/common";
-import { ApiBadRequestResponse, ApiHeader, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBadRequestResponse, ApiHeader, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
 import { PrismaService } from "src/app/prisma.service";
 import { JwtAuthGuard } from "src/auth/general/jwt-auth.guard";
 import { GetFollowersResDto } from "../dtos/follow-dtos/get-followers-res.dto";
@@ -45,6 +45,7 @@ export class FollowersController{
         Username not found!\n
         `
     })
+    @ApiUnauthorizedResponse({description: "Unauthorized!"})
     async removeFollower(@Request() req, @Body() body: RemoveFollowerReqDto){
         const follower = await this.prisma.user.findUnique({
             where: {
